@@ -1,0 +1,115 @@
+@import '../tokens.css';
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ui-text);
+}
+
+.required {
+  color: var(--ui-danger);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  color: var(--ui-text);
+}
+
+.control:focus-within {
+  border-color: var(--ui-primary);
+  box-shadow: var(--ui-focus);
+}
+
+.invalid {
+  border-color: var(--ui-danger);
+  background: var(--ui-danger-bg);
+}
+
+.invalid:focus-within {
+  border-color: var(--ui-danger);
+  box-shadow: var(--ui-danger-ring);
+}
+
+.disabled {
+  opacity: 0.6;
+}
+
+.sm {
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.md {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.lg {
+  min-height: 52px;
+  padding: 0 14px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 8px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.sm .input {
+  font-size: 14px;
+}
+
+.lg .input {
+  font-size: 16px;
+}
+
+.input::placeholder {
+  color: var(--ui-text-muted);
+}
+
+.addon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ui-text-muted);
+}
+
+.hint,
+.error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.hint {
+  color: var(--ui-text-muted);
+}
+
+.error {
+  color: var(--ui-danger);
+}

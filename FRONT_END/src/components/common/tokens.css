@@ -1,0 +1,31 @@
+@import '../../styles/colors.css';
+
+:root {
+  --ui-primary: var(--color-green-500);
+  --ui-primary-hover: var(--color-green-600);
+  --ui-primary-active: var(--color-green-700);
+  --ui-text: var(--color-on-light-primary);
+  --ui-text-muted: var(--color-grey-700);
+  --ui-text-on-primary: var(--color-on-dark-primary);
+  --ui-border: var(--color-grey-300);
+  --ui-surface: var(--color-bg-light-over);
+  --ui-secondary: var(--color-grey-100);
+  --ui-secondary-hover: var(--color-grey-200);
+  --ui-danger: var(--color-danger-normal);
+  --ui-danger-bg: var(--color-danger-light);
+  --ui-radius: 10px;
+  --ui-focus: 0 0 0 3px #44BA464D;
+  --ui-danger-ring: 0 0 0 3px #ED1C244D;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ui-text: var(--color-on-dark-primary);
+    --ui-text-muted: var(--color-on-dark-secondary);
+    --ui-border: var(--color-on-dark-stroke);
+    --ui-surface: var(--color-bg-dark-over);
+    --ui-secondary: var(--color-bg-dark-base);
+    --ui-secondary-hover: var(--color-bg-dark-over);
+    --ui-danger-bg: var(--color-danger-normal-active);
+  }
+}
