@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "mongoose": "^9.11.0"
+  },
+  "name": "phan-tich-thiet-ke-website-ban-hang-gia-dung",
+  "version": "1.0.0",
+  "description": "* ReactJS\r * TypeScript\r * Vite\r * Tailwind CSS\r * React Router\r * Axios\r * ESLint",
+  "main": "index.js",
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NguyenTuanDat187/PHAN-TICH-THIET-KE-WEBSITE-BAN-HANG-GIA-DUNG.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/NguyenTuanDat187/PHAN-TICH-THIET-KE-WEBSITE-BAN-HANG-GIA-DUNG/issues"
+  },
+  "homepage": "https://github.com/NguyenTuanDat187/PHAN-TICH-THIET-KE-WEBSITE-BAN-HANG-GIA-DUNG#readme"
+}
