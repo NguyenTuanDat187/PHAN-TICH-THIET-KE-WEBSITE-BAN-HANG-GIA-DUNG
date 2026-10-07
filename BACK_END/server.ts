@@ -1,0 +1,50 @@
+import dotenv from "dotenv";
+import app from "./app";
+import connectDatabase from "./src/config/database";
+import * as models from "./src/models";
+
+dotenv.config();
+
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+    try {
+        // 1. Kết nối MongoDB
+        await connectDatabase();
+
+        // 2. Tự động tạo tất cả collection từ các Model
+        console.log("📦 Đang khởi tạo các collection...");
+
+        for (const [name, model] of Object.entries(models)) {
+            try {
+                await model.createCollection();
+                console.log(`✅ ${name} → collection đã tạo`);
+            } catch (error: any) {
+                // Collection đã tồn tại thì bỏ qua
+                if (error?.codeName === "NamespaceExists") {
+                    console.log(`ℹ️ ${name} → collection đã tồn tại`);
+                } else {
+                    console.error(`❌ ${name} → không thể tạo collection`);
+                    console.error(error);
+                }
+            }
+        }
+
+        console.log("=================================");
+        console.log("🚀 Tất cả collection đã sẵn sàng");
+        console.log("=================================");
+
+        // 3. Chạy server
+        app.listen(PORT, () => {
+            console.log("=================================");
+            console.log("🚀 Server is running");
+            console.log(`🌐 http://localhost:${PORT}`);
+            console.log("=================================");
+        });
+    } catch (error) {
+        console.error("❌ Server startup failed:", error);
+        process.exit(1);
+    }
+};
+
+startServer();
