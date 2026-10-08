@@ -12,11 +12,11 @@
  *      ↓
  * Auth Service
  *      ↓
- * ┌───────────────┐
- * │ User Model    │
- * │ OTP Service   │
- * │ JWT Utils     │
- * └───────────────┘
+ * ┌─────────────────────┐
+ * │ User Model          │
+ * │ OTP Service         │
+ * │ JWT Utils           │
+ * └─────────────────────┘
  *      ↓
  * MongoDB / Email
  *
@@ -27,15 +27,18 @@
  *
  * SERVICE CÓ:
  * - Kiểm tra User.
+ * - Kiểm tra role.
  * - Kiểm tra trạng thái tài khoản.
  * - Hash password bằng bcrypt.
  * - Kiểm tra password.
  * - Gọi OTP Service.
- * - Tạo tài khoản.
- * - Đăng nhập.
- * - Quên mật khẩu.
- * - Reset password.
- * - Đổi password.
+ * - Tạo tài khoản customer.
+ * - Đăng nhập customer.
+ * - Đăng nhập admin.
+ * - Quên mật khẩu customer/admin.
+ * - Reset password customer/admin.
+ * - Đổi password customer/admin.
+ * - Đổi email admin.
  * - Tạo JWT.
  *
  * =========================================================
@@ -81,6 +84,7 @@ const BCRYPT_SALT_ROUNDS = 12;
  * Dữ liệu trả về sau:
  * - Register
  * - Login
+ * - Admin Login
  *
  * Tuyệt đối không trả password.
  *
@@ -113,7 +117,7 @@ interface AuthResult {
  *
  * Ví dụ:
  *
- * "  Admin@Gmail.COM "
+ * " Admin@Gmail.COM "
  *
  * ↓
  *
@@ -122,9 +126,7 @@ interface AuthResult {
  * =========================================================
  */
 
-const normalizeEmail = (
-  email: string
-): string => {
+const normalizeEmail = (email: string): string => {
   return email.trim().toLowerCase();
 };
 
@@ -189,16 +191,68 @@ const generateAccessToken = (
 
 /**
  * =========================================================
- * 1. REQUEST REGISTER OTP
+ * HELPER: CHECK USER STATUS
  * =========================================================
  *
- * BƯỚC:
+ * Dùng chung cho nhiều chức năng.
+ *
+ * Không cho:
+ * - blocked
+ * - inactive
+ *
+ * =========================================================
+ */
+
+const checkUserStatus = (
+  user: IUser
+): void => {
+  if (user.status === "blocked") {
+    throw new Error(
+      "Tài khoản đã bị khóa."
+    );
+  }
+
+  if (user.status === "inactive") {
+    throw new Error(
+      "Tài khoản đang không hoạt động."
+    );
+  }
+};
+
+/**
+ * =========================================================
+ * HELPER: CHECK ADMIN
+ * =========================================================
+ *
+ * Chỉ tài khoản có:
+ *
+ * role = admin
+ *
+ * mới được sử dụng các chức năng Admin.
+ *
+ * =========================================================
+ */
+
+const checkAdminRole = (
+  user: IUser
+): void => {
+  if (user.role !== "admin") {
+    throw new Error(
+      "Bạn không có quyền truy cập chức năng quản trị."
+    );
+  }
+};
+
+/**
+ * =========================================================
+ * 1. REQUEST REGISTER OTP
+ * =========================================================
  *
  * User nhập email
  *      ↓
  * Validator kiểm tra email
  *      ↓
- * Service kiểm tra email trong Database
+ * Service kiểm tra email Database
  *      ↓
  * Email chưa tồn tại
  *      ↓
@@ -217,10 +271,6 @@ export const requestRegisterOtp = async (
   const normalizedEmail =
     normalizeEmail(email);
 
-  /**
-   * Kiểm tra email đã tồn tại chưa.
-   */
-
   const existingUser =
     await User.findOne({
       email: normalizedEmail,
@@ -232,10 +282,6 @@ export const requestRegisterOtp = async (
     );
   }
 
-  /**
-   * Gửi OTP đăng ký.
-   */
-
   await sendOtp(
     normalizedEmail,
     "register"
@@ -245,15 +291,6 @@ export const requestRegisterOtp = async (
 /**
  * =========================================================
  * 2. VERIFY REGISTER OTP
- * =========================================================
- *
- * OTP đúng:
- *
- * → OTP Service đánh dấu verified = true.
- *
- * Sau bước này Frontend mới được chuyển sang
- * form nhập thông tin tài khoản.
- *
  * =========================================================
  */
 
@@ -283,24 +320,16 @@ export const verifyRegisterOtp = (
  * 3. REGISTER
  * =========================================================
  *
- * Đây là bước TẠO USER.
- *
  * Điều kiện:
- *
  * 1. Email đã verify OTP.
  * 2. Email chưa tồn tại.
  * 3. Dữ liệu đã qua Validator.
  * 4. Password và confirmPassword đã khớp.
  *
- * Password:
+ * User đăng ký:
  *
- * Plain password
- *      ↓
- * bcrypt.hash()
- *      ↓
- * Password hash
- *      ↓
- * MongoDB
+ * role   = customer
+ * status = active
  *
  * =========================================================
  */
@@ -317,10 +346,7 @@ export const register = async (
     normalizeEmail(data.email);
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 1:
-   * KIỂM TRA EMAIL ĐÃ VERIFY OTP
-   * -------------------------------------------------------
+   * Kiểm tra email đã verify OTP.
    */
 
   const emailVerified =
@@ -335,12 +361,7 @@ export const register = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 2:
-   * KIỂM TRA EMAIL TRONG DATABASE
-   * -------------------------------------------------------
-   *
-   * Kiểm tra lại lần nữa trước khi tạo User.
+   * Kiểm tra email trong Database
    */
 
   const existingUser =
@@ -355,10 +376,7 @@ export const register = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 3:
-   * HASH PASSWORD
-   * -------------------------------------------------------
+   * Hash password.
    */
 
   const hashedPassword =
@@ -368,16 +386,7 @@ export const register = async (
     );
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 4:
-   * TẠO USER
-   * -------------------------------------------------------
-   *
-   * User đăng ký thông thường:
-   *
-   * role   = customer
-   * status = active
-   *
+   * Tạo customer.
    */
 
   const user =
@@ -399,12 +408,7 @@ export const register = async (
     });
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 5:
-   * XÓA OTP ĐĂNG KÝ
-   * -------------------------------------------------------
-   *
-   * OTP đã sử dụng → không được sử dụng lại.
+   * OTP đã sử dụng → xóa/invalidate.
    */
 
   invalidateOtpService(
@@ -413,20 +417,14 @@ export const register = async (
   );
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 6:
-   * TẠO JWT
-   * -------------------------------------------------------
+   * Tạo JWT.
    */
 
   const token =
     generateAccessToken(user);
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 7:
-   * TRẢ KẾT QUẢ
-   * -------------------------------------------------------
+   * Trả kết quả.
    */
 
   return {
@@ -437,19 +435,14 @@ export const register = async (
 
 /**
  * =========================================================
- * 4. LOGIN
+ * 4. LOGIN CUSTOMER
  * =========================================================
  *
- * Dùng chung cho:
+ * Customer sử dụng login chung.
  *
- * - customer
- * - admin
+ * Admin sẽ sử dụng:
  *
- * Không cần Admin Model riêng.
- *
- * Role được lấy từ:
- *
- * user.role
+ * adminLogin()
  *
  * =========================================================
  */
@@ -462,30 +455,14 @@ export const login = async (
     normalizeEmail(email);
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 1:
-   * TÌM USER
-   * -------------------------------------------------------
-   *
-   * User.model.ts:
-   *
-   * password: {
-   *   select: false
-   * }
-   *
-   * Vì vậy phải:
-   *
-   * .select("+password")
+   * password có select:false
+   * nên phải select("+password").
    */
 
   const user =
     await User.findOne({
       email: normalizedEmail,
     }).select("+password");
-
-  /**
-   * Không tiết lộ email có tồn tại hay không.
-   */
 
   if (!user) {
     throw new Error(
@@ -494,29 +471,13 @@ export const login = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 2:
-   * KIỂM TRA STATUS
-   * -------------------------------------------------------
+   * Kiểm tra trạng thái.
    */
 
-  if (user.status === "blocked") {
-    throw new Error(
-      "Tài khoản đã bị khóa."
-    );
-  }
-
-  if (user.status === "inactive") {
-    throw new Error(
-      "Tài khoản đang không hoạt động."
-    );
-  }
+  checkUserStatus(user);
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 3:
-   * KIỂM TRA PASSWORD
-   * -------------------------------------------------------
+   * Kiểm tra password.
    */
 
   const passwordCorrect =
@@ -532,21 +493,11 @@ export const login = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 4:
-   * TẠO JWT
-   * -------------------------------------------------------
+   * Tạo JWT.
    */
 
   const token =
     generateAccessToken(user);
-
-  /**
-   * -------------------------------------------------------
-   * BƯỚC 5:
-   * TRẢ KẾT QUẢ
-   * -------------------------------------------------------
-   */
 
   return {
     user: formatUser(user),
@@ -556,10 +507,275 @@ export const login = async (
 
 /**
  * =========================================================
- * 5. FORGOT PASSWORD
+ * 5. FORGOT PASSWORD CUSTOMER
+ * =========================================================
+ */
+
+export const forgotPassword = async (
+  email: string
+): Promise<void> => {
+  const normalizedEmail =
+    normalizeEmail(email);
+
+  const user =
+    await User.findOne({
+      email: normalizedEmail,
+    });
+
+  if (!user) {
+    throw new Error(
+      "Không tìm thấy tài khoản với email này."
+    );
+  }
+
+  checkUserStatus(user);
+
+  await sendOtp(
+    normalizedEmail,
+    "reset_password"
+  );
+};
+
+/**
+ * =========================================================
+ * 6. RESET PASSWORD CUSTOMER
+ * =========================================================
+ */
+
+export const resetPassword = async (
+  data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }
+): Promise<void> => {
+  const normalizedEmail =
+    normalizeEmail(data.email);
+
+  /**
+   * VERIFY OTP
+   */
+
+  const otpValid =
+    verifyOtpService(
+      normalizedEmail,
+      data.otp,
+      "reset_password"
+    );
+
+  if (!otpValid) {
+    throw new Error(
+      "OTP không hợp lệ hoặc đã hết hạn."
+    );
+  }
+
+  /**
+   * Lấy User + password cũ.
+   */
+
+  const user =
+    await User.findOne({
+      email: normalizedEmail,
+    }).select("+password");
+
+  if (!user) {
+    invalidateOtpService(
+      normalizedEmail,
+      "reset_password"
+    );
+
+    throw new Error(
+      "Không tìm thấy tài khoản."
+    );
+  }
+
+  /**
+   * Kiểm tra status.
+   */
+
+  try {
+    checkUserStatus(user);
+  } catch (error) {
+    invalidateOtpService(
+      normalizedEmail,
+      "reset_password"
+    );
+
+    throw error;
+  }
+
+  /**
+   * Password mới không được giống password cũ.
+   */
+
+  const samePassword =
+    await bcrypt.compare(
+      data.newPassword,
+      user.password
+    );
+
+  if (samePassword) {
+    throw new Error(
+      "Mật khẩu mới không được trùng với mật khẩu cũ."
+    );
+  }
+
+  /**
+   * Hash password mới.
+   */
+
+  const hashedPassword =
+    await bcrypt.hash(
+      data.newPassword,
+      BCRYPT_SALT_ROUNDS
+    );
+
+  user.password =
+    hashedPassword;
+
+  await user.save();
+
+  /**
+   * OTP chỉ sử dụng một lần.
+   */
+
+  invalidateOtpService(
+    normalizedEmail,
+    "reset_password"
+  );
+};
+
+/**
+ * =========================================================
+ * 7. GET CURRENT USER
+ * =========================================================
+ */
+
+export const getCurrentUser = async (
+  userId: string
+): Promise<
+  ReturnType<typeof formatUser>
+> => {
+  const user =
+    await User.findById(userId);
+
+  if (!user) {
+    throw new Error(
+      "Không tìm thấy người dùng."
+    );
+  }
+
+  return formatUser(user);
+};
+
+/**
+ * =========================================================
+ * 8. CHANGE PASSWORD CUSTOMER
+ * =========================================================
+ */
+
+export const changePassword = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const user =
+    await User.findById(
+      userId
+    ).select("+password");
+
+  if (!user) {
+    throw new Error(
+      "Không tìm thấy người dùng."
+    );
+  }
+
+  /**
+   * Chỉ tài khoản active mới được đổi password.
+   */
+
+  if (user.status !== "active") {
+    throw new Error(
+      "Tài khoản không ở trạng thái hoạt động."
+    );
+  }
+
+  /**
+   * Kiểm tra password hiện tại.
+   */
+
+  const currentPasswordCorrect =
+    await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+  if (!currentPasswordCorrect) {
+    throw new Error(
+      "Mật khẩu hiện tại không chính xác."
+    );
+  }
+
+  /**
+   * Password mới không được giống password cũ.
+   */
+
+  const samePassword =
+    await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+
+  if (samePassword) {
+    throw new Error(
+      "Mật khẩu mới không được trùng với mật khẩu cũ."
+    );
+  }
+
+  /**
+   * Hash password mới.
+   */
+
+  user.password =
+    await bcrypt.hash(
+      newPassword,
+      BCRYPT_SALT_ROUNDS
+    );
+
+  /**
+   * Lưu Database.
+   */
+
+  await user.save();
+};
+
+/**
+ * =========================================================
  * =========================================================
  *
- * Customer và Admin đều sử dụng chung.
+ *                 ADMIN AUTHENTICATION
+ *
+ * =========================================================
+ * =========================================================
+ *
+ * Admin sử dụng chung User.model.
+ *
+ * Phân biệt:
+ *
+ * role = "admin"
+ *
+ * Không tạo Admin.model riêng.
+ *
+ * =========================================================
+ */
+
+
+/**
+ * =========================================================
+ * 9. ADMIN LOGIN
+ * =========================================================
+ *
+ * ADMIN DUY NHẤT.
  *
  * Flow:
  *
@@ -567,14 +783,111 @@ export const login = async (
  *   ↓
  * Tìm User
  *   ↓
+ * role === admin ?
+ *   ↓
  * Check status
  *   ↓
+ * Check password
+ *   ↓
+ * JWT
+ *
+ * Customer không thể đăng nhập qua endpoint Admin.
+ *
+ * =========================================================
+ */
+
+export const adminLogin = async (
+  email: string,
+  password: string
+): Promise<AuthResult> => {
+  const normalizedEmail =
+    normalizeEmail(email);
+
+  /**
+   * Tìm User theo email.
+   *
+   * password có select:false
+   * nên phải select("+password").
+   */
+
+  const user =
+    await User.findOne({
+      email: normalizedEmail,
+    }).select("+password");
+
+  if (!user) {
+    throw new Error(
+      "Email hoặc mật khẩu admin không chính xác."
+    );
+  }
+
+  /**
+   * BẮT BUỘC phải là admin.
+   */
+
+  checkAdminRole(user);
+
+  /**
+   * Kiểm tra trạng thái.
+   */
+
+  checkUserStatus(user);
+
+  /**
+   * Kiểm tra password.
+   */
+
+  const passwordCorrect =
+    await bcrypt.compare(
+      password,
+      user.password
+    );
+
+  if (!passwordCorrect) {
+    throw new Error(
+      "Email hoặc mật khẩu admin không chính xác."
+    );
+  }
+
+  /**
+   * Tạo JWT.
+   *
+   * JWT chứa:
+   * - userId
+   * - role = admin
+   */
+
+  const token =
+    generateAccessToken(user);
+
+  return {
+    user: formatUser(user),
+    token,
+  };
+};
+
+
+/**
+ * =========================================================
+ * 10. ADMIN FORGOT PASSWORD
+ * =========================================================
+ *
+ * Flow:
+ *
+ * Admin nhập email
+ *       ↓
+ * Tìm User
+ *       ↓
+ * Kiểm tra role = admin
+ *       ↓
+ * Kiểm tra status
+ *       ↓
  * Gửi OTP reset_password
  *
  * =========================================================
  */
 
-export const forgotPassword = async (
+export const adminForgotPassword = async (
   email: string
 ): Promise<void> => {
   const normalizedEmail =
@@ -589,35 +902,23 @@ export const forgotPassword = async (
       email: normalizedEmail,
     });
 
-  /**
-   * Không tồn tại User.
-   */
-
   if (!user) {
     throw new Error(
-      "Không tìm thấy tài khoản với email này."
+      "Không tìm thấy tài khoản admin."
     );
   }
 
   /**
-   * Không cho tài khoản blocked reset password.
+   * Chỉ admin được sử dụng chức năng này.
    */
 
-  if (user.status === "blocked") {
-    throw new Error(
-      "Tài khoản đã bị khóa."
-    );
-  }
+  checkAdminRole(user);
 
   /**
-   * Không cho tài khoản inactive reset password.
+   * Kiểm tra trạng thái.
    */
 
-  if (user.status === "inactive") {
-    throw new Error(
-      "Tài khoản đang không hoạt động."
-    );
-  }
+  checkUserStatus(user);
 
   /**
    * Gửi OTP reset password.
@@ -629,9 +930,10 @@ export const forgotPassword = async (
   );
 };
 
+
 /**
  * =========================================================
- * 6. RESET PASSWORD
+ * 11. ADMIN RESET PASSWORD
  * =========================================================
  *
  * Input:
@@ -646,11 +948,15 @@ export const forgotPassword = async (
  *   ↓
  * Verify OTP
  *   ↓
- * Lấy User + password cũ
+ * Tìm User
  *   ↓
- * Check password mới != password cũ
+ * Kiểm tra role admin
  *   ↓
- * bcrypt.hash()
+ * Kiểm tra status
+ *   ↓
+ * Password mới != password cũ
+ *   ↓
+ * Hash
  *   ↓
  * Update
  *   ↓
@@ -659,7 +965,7 @@ export const forgotPassword = async (
  * =========================================================
  */
 
-export const resetPassword = async (
+export const adminResetPassword = async (
   data: {
     email: string;
     otp: string;
@@ -692,7 +998,7 @@ export const resetPassword = async (
   /**
    * -------------------------------------------------------
    * BƯỚC 2:
-   * LẤY USER + PASSWORD CŨ
+   * LẤY ADMIN + PASSWORD
    * -------------------------------------------------------
    */
 
@@ -701,10 +1007,6 @@ export const resetPassword = async (
       email: normalizedEmail,
     }).select("+password");
 
-  /**
-   * Nếu User bị xóa sau khi OTP được gửi.
-   */
-
   if (!user) {
     invalidateOtpService(
       normalizedEmail,
@@ -712,52 +1014,51 @@ export const resetPassword = async (
     );
 
     throw new Error(
-      "Không tìm thấy tài khoản."
+      "Không tìm thấy tài khoản admin."
     );
   }
 
   /**
    * -------------------------------------------------------
    * BƯỚC 3:
-   * KIỂM TRA STATUS
+   * KIỂM TRA ROLE ADMIN
    * -------------------------------------------------------
    */
 
-  if (user.status === "blocked") {
+  if (user.role !== "admin") {
     invalidateOtpService(
       normalizedEmail,
       "reset_password"
     );
 
     throw new Error(
-      "Tài khoản đã bị khóa."
-    );
-  }
-
-  if (user.status === "inactive") {
-    invalidateOtpService(
-      normalizedEmail,
-      "reset_password"
-    );
-
-    throw new Error(
-      "Tài khoản đang không hoạt động."
+      "Tài khoản không có quyền quản trị."
     );
   }
 
   /**
    * -------------------------------------------------------
    * BƯỚC 4:
+   * KIỂM TRA STATUS
+   * -------------------------------------------------------
+   */
+
+  try {
+    checkUserStatus(user);
+  } catch (error) {
+    invalidateOtpService(
+      normalizedEmail,
+      "reset_password"
+    );
+
+    throw error;
+  }
+
+  /**
+   * -------------------------------------------------------
+   * BƯỚC 5:
    * PASSWORD MỚI KHÔNG ĐƯỢC GIỐNG PASSWORD CŨ
    * -------------------------------------------------------
-   *
-   * Không thể dùng:
-   *
-   * data.newPassword === user.password
-   *
-   * vì user.password là HASH.
-   *
-   * Phải dùng bcrypt.compare().
    */
 
   const samePassword =
@@ -774,7 +1075,7 @@ export const resetPassword = async (
 
   /**
    * -------------------------------------------------------
-   * BƯỚC 5:
+   * BƯỚC 6:
    * HASH PASSWORD MỚI
    * -------------------------------------------------------
    */
@@ -787,8 +1088,8 @@ export const resetPassword = async (
 
   /**
    * -------------------------------------------------------
-   * BƯỚC 6:
-   * CẬP NHẬT PASSWORD
+   * BƯỚC 7:
+   * UPDATE PASSWORD
    * -------------------------------------------------------
    */
 
@@ -799,7 +1100,7 @@ export const resetPassword = async (
 
   /**
    * -------------------------------------------------------
-   * BƯỚC 7:
+   * BƯỚC 8:
    * INVALIDATE OTP
    * -------------------------------------------------------
    */
@@ -810,72 +1111,38 @@ export const resetPassword = async (
   );
 };
 
+
 /**
  * =========================================================
- * 7. GET CURRENT USER
+ * 12. ADMIN CHANGE PASSWORD
  * =========================================================
  *
- * Dùng cho:
+ * Admin đã đăng nhập.
  *
- * GET /api/auth/me
- *
- * Auth Middleware:
+ * Không cần OTP.
  *
  * JWT
- * ↓
+ *   ↓
  * userId
- * ↓
- * Controller
- * ↓
- * Service
- *
- * Service chỉ chịu trách nhiệm tìm User.
- *
- * =========================================================
- */
-
-export const getCurrentUser = async (
-  userId: string
-): Promise<ReturnType<typeof formatUser>> => {
-  const user =
-    await User.findById(userId);
-
-  if (!user) {
-    throw new Error(
-      "Không tìm thấy người dùng."
-    );
-  }
-
-  return formatUser(user);
-};
-
-/**
- * =========================================================
- * 8. CHANGE PASSWORD
- * =========================================================
- *
- * Dành cho User đã đăng nhập.
- *
- * Input:
- *
- * - currentPassword
- * - newPassword
- *
- * Không cần OTP vì User đã xác thực bằng JWT.
+ *   ↓
+ * Tìm User
+ *   ↓
+ * role = admin
+ *   ↓
+ * currentPassword
+ *   ↓
+ * newPassword
  *
  * =========================================================
  */
 
-export const changePassword = async (
+export const adminChangePassword = async (
   userId: string,
   currentPassword: string,
   newPassword: string
 ): Promise<void> => {
   /**
-   * -------------------------------------------------------
-   * BƯỚC 1:
-   * LẤY USER + PASSWORD HASH
-   * -------------------------------------------------------
+   * Lấy admin + password hash.
    */
 
   const user =
@@ -885,28 +1152,28 @@ export const changePassword = async (
 
   if (!user) {
     throw new Error(
-      "Không tìm thấy người dùng."
+      "Không tìm thấy tài khoản admin."
     );
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 2:
-   * KIỂM TRA STATUS
-   * -------------------------------------------------------
+   * Bắt buộc là admin.
+   */
+
+  checkAdminRole(user);
+
+  /**
+   * Admin phải active.
    */
 
   if (user.status !== "active") {
     throw new Error(
-      "Tài khoản không ở trạng thái hoạt động."
+      "Tài khoản admin không ở trạng thái hoạt động."
     );
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 3:
-   * KIỂM TRA PASSWORD HIỆN TẠI
-   * -------------------------------------------------------
+   * Kiểm tra password hiện tại.
    */
 
   const currentPasswordCorrect =
@@ -922,10 +1189,7 @@ export const changePassword = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 4:
-   * PASSWORD MỚI KHÔNG ĐƯỢC GIỐNG PASSWORD CŨ
-   * -------------------------------------------------------
+   * Password mới không được giống password cũ.
    */
 
   const samePassword =
@@ -941,10 +1205,7 @@ export const changePassword = async (
   }
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 5:
-   * HASH PASSWORD MỚI
-   * -------------------------------------------------------
+   * Hash password mới.
    */
 
   user.password =
@@ -954,11 +1215,400 @@ export const changePassword = async (
     );
 
   /**
-   * -------------------------------------------------------
-   * BƯỚC 6:
-   * LƯU DATABASE
-   * -------------------------------------------------------
+   * Lưu Database.
    */
 
   await user.save();
 };
+
+
+/**
+ * =========================================================
+ * 13. ADMIN GET CURRENT USER
+ * =========================================================
+ *
+ * Dùng cho:
+ *
+ * GET /api/admin/auth/me
+ *
+ * Flow:
+ *
+ * JWT
+ *  ↓
+ * userId
+ *  ↓
+ * Middleware
+ *  ↓
+ * Service
+ *  ↓
+ * User
+ *
+ * Chỉ trả admin.
+ *
+ * =========================================================
+ */
+
+export const adminGetCurrentUser = async (
+  userId: string
+): Promise<
+  ReturnType<typeof formatUser>
+> => {
+  const user =
+    await User.findById(userId);
+
+  if (!user) {
+    throw new Error(
+      "Không tìm thấy tài khoản admin."
+    );
+  }
+
+  /**
+   * Bắt buộc role admin.
+   */
+
+  checkAdminRole(user);
+
+  /**
+   * Kiểm tra trạng thái.
+   */
+
+  checkUserStatus(user);
+
+  return formatUser(user);
+};
+
+
+/**
+ * =========================================================
+ * 14. ADMIN REQUEST CHANGE EMAIL
+ * =========================================================
+ *
+ * Admin đã đăng nhập.
+ *
+ * Input:
+ *
+ * newEmail
+ *
+ * Flow:
+ *
+ * Admin đăng nhập
+ *       ↓
+ * JWT
+ *       ↓
+ * Tìm admin
+ *       ↓
+ * Kiểm tra newEmail
+ *       ↓
+ * Email mới chưa được sử dụng
+ *       ↓
+ * Gửi OTP tới email mới
+ *
+ * CHƯA update email ở bước này.
+ *
+ * =========================================================
+ */
+
+export const adminRequestChangeEmail =
+  async (
+    userId: string,
+    newEmail: string
+  ): Promise<void> => {
+    const normalizedNewEmail =
+      normalizeEmail(newEmail);
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 1:
+     * LẤY ADMIN
+     * -------------------------------------------------------
+     */
+
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      throw new Error(
+        "Không tìm thấy tài khoản admin."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 2:
+     * KIỂM TRA ROLE
+     * -------------------------------------------------------
+     */
+
+    checkAdminRole(user);
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 3:
+     * KIỂM TRA STATUS
+     * -------------------------------------------------------
+     */
+
+    checkUserStatus(user);
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 4:
+     * EMAIL MỚI PHẢI KHÁC EMAIL HIỆN TẠI
+     * -------------------------------------------------------
+     */
+
+    if (
+      normalizedNewEmail ===
+      normalizeEmail(user.email)
+    ) {
+      throw new Error(
+        "Email mới phải khác email hiện tại."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 5:
+     * KIỂM TRA EMAIL MỚI ĐÃ TỒN TẠI CHƯA
+     * -------------------------------------------------------
+     */
+
+    const existingUser =
+      await User.findOne({
+        email: normalizedNewEmail,
+      });
+
+    if (existingUser) {
+      throw new Error(
+        "Email mới đã được sử dụng."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 6:
+     * GỬI OTP TỚI EMAIL MỚI
+     * -------------------------------------------------------
+     *
+     * OTP type:
+     *
+     * change_email
+     *
+     * =======================================================
+     */
+
+    await sendOtp(
+      normalizedNewEmail,
+      "change_email"
+    );
+  };
+
+
+/**
+ * =========================================================
+ * 15. ADMIN VERIFY CHANGE EMAIL
+ * =========================================================
+ *
+ * Input:
+ *
+ * - userId
+ * - newEmail
+ * - otp
+ *
+ * Flow:
+ *
+ * OTP
+ *   ↓
+ * Verify OTP
+ *   ↓
+ * Tìm admin
+ *   ↓
+ * Kiểm tra role
+ *   ↓
+ * Kiểm tra email mới
+ *   ↓
+ * Update email
+ *   ↓
+ * emailVerifiedAt = now
+ *   ↓
+ * Invalidate OTP
+ *
+ * =========================================================
+ */
+
+export const adminVerifyChangeEmail =
+  async (
+    userId: string,
+    newEmail: string,
+    otp: string
+  ): Promise<
+    ReturnType<typeof formatUser>
+  > => {
+    const normalizedNewEmail =
+      normalizeEmail(newEmail);
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 1:
+     * VERIFY OTP
+     * -------------------------------------------------------
+     */
+
+    const otpValid =
+      verifyOtpService(
+        normalizedNewEmail,
+        otp,
+        "change_email"
+      );
+
+    if (!otpValid) {
+      throw new Error(
+        "OTP không hợp lệ hoặc đã hết hạn."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 2:
+     * LẤY ADMIN
+     * -------------------------------------------------------
+     */
+
+    const user =
+      await User.findById(userId);
+
+    if (!user) {
+      invalidateOtpService(
+        normalizedNewEmail,
+        "change_email"
+      );
+
+      throw new Error(
+        "Không tìm thấy tài khoản admin."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 3:
+     * KIỂM TRA ROLE
+     * -------------------------------------------------------
+     */
+
+    if (user.role !== "admin") {
+      invalidateOtpService(
+        normalizedNewEmail,
+        "change_email"
+      );
+
+      throw new Error(
+        "Tài khoản không có quyền quản trị."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 4:
+     * KIỂM TRA STATUS
+     * -------------------------------------------------------
+     */
+
+    try {
+      checkUserStatus(user);
+    } catch (error) {
+      invalidateOtpService(
+        normalizedNewEmail,
+        "change_email"
+      );
+
+      throw error;
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 5:
+     * EMAIL MỚI KHÔNG ĐƯỢC TRÙNG EMAIL HIỆN TẠI
+     * -------------------------------------------------------
+     */
+
+    if (
+      normalizeEmail(user.email) ===
+      normalizedNewEmail
+    ) {
+      invalidateOtpService(
+        normalizedNewEmail,
+        "change_email"
+      );
+
+      throw new Error(
+        "Email mới phải khác email hiện tại."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 6:
+     * KIỂM TRA EMAIL MỚI CÓ BỊ USER KHÁC SỬ DỤNG KHÔNG
+     * -------------------------------------------------------
+     */
+
+    const existingUser =
+      await User.findOne({
+        email: normalizedNewEmail,
+        _id: {
+          $ne: user._id,
+        },
+      });
+
+    if (existingUser) {
+      invalidateOtpService(
+        normalizedNewEmail,
+        "change_email"
+      );
+
+      throw new Error(
+        "Email mới đã được sử dụng."
+      );
+    }
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 7:
+     * UPDATE EMAIL
+     * -------------------------------------------------------
+     */
+
+    user.email =
+      normalizedNewEmail;
+
+    /**
+     * Email mới đã được xác thực
+     * bằng OTP.
+     */
+
+    user.emailVerifiedAt =
+      new Date();
+
+    await user.save();
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 8:
+     * INVALIDATE OTP
+     * -------------------------------------------------------
+     */
+
+    invalidateOtpService(
+      normalizedNewEmail,
+      "change_email"
+    );
+
+    /**
+     * -------------------------------------------------------
+     * BƯỚC 9:
+     * TRẢ ADMIN MỚI
+     * -------------------------------------------------------
+     */
+
+    return formatUser(user);
+  };

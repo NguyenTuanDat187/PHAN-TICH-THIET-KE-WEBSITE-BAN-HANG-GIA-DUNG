@@ -48,7 +48,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Authentication
 app.use("/api/auth", authRoutes);
-
 /**
  * =========================================================
  * HEALTH CHECK

@@ -10,14 +10,17 @@
  * - Giới hạn số lần nhập sai
  * - Xác định loại OTP
  * - Gửi OTP qua email
+ * - Chống spam gửi lại OTP
+ * - Ràng buộc OTP với userId khi cần thiết
  *
- * Lưu ý:
+ * LƯU Ý:
  * - Không tạo MongoDB Model riêng cho OTP.
  * - OTP được lưu tạm trong RAM bằng Map.
  *
- * Các loại OTP:
+ * CÁC LOẠI OTP:
  * - register
  * - reset_password
+ * - change_email
  *
  * =========================================================
  */
@@ -30,11 +33,23 @@ import { sendOtpEmail } from "../config/mail";
  * =========================================================
  * OTP TYPE
  * =========================================================
+ *
+ * register:
+ * - Xác thực email khi đăng ký tài khoản.
+ *
+ * reset_password:
+ * - Xác thực OTP để đặt lại mật khẩu.
+ *
+ * change_email:
+ * - Xác thực OTP khi admin đổi email.
+ *
+ * =========================================================
  */
 
 export type OTPType =
   | "register"
-  | "reset_password";
+  | "reset_password"
+  | "change_email";
 
 /**
  * =========================================================
@@ -50,9 +65,17 @@ export interface OTPData {
 
   /**
    * Thời điểm OTP hết hạn.
+   *
    * Lưu dưới dạng timestamp milliseconds.
    */
   expiresAt: number;
+
+  /**
+   * Thời điểm được phép gửi OTP mới.
+   *
+   * Dùng để chống spam gửi OTP liên tục.
+   */
+  nextResendAt: number;
 
   /**
    * Số lần nhập OTP sai.
@@ -68,6 +91,18 @@ export interface OTPData {
    * OTP đã được xác thực hay chưa.
    */
   verified: boolean;
+
+  /**
+   * User ID được phép sử dụng OTP.
+   *
+   * - register: không cần.
+   * - reset_password: có thể không cần.
+   * - change_email: bắt buộc.
+   *
+   * Việc này giúp OTP đổi email được gắn
+   * với đúng admin đang thực hiện yêu cầu.
+   */
+  userId?: string;
 }
 
 /**
@@ -84,8 +119,8 @@ export interface OTPData {
  * Ví dụ:
  *
  * nguyenvana@gmail.com:register
- *
  * nguyenvana@gmail.com:reset_password
+ * admin@gmail.com:change_email
  *
  * =========================================================
  */
@@ -104,6 +139,12 @@ const otpStore = new Map<string, OTPData>();
 const OTP_EXPIRE_TIME = 5 * 60 * 1000;
 
 /**
+ * Người dùng phải chờ 60 giây
+ * trước khi yêu cầu OTP mới.
+ */
+const OTP_RESEND_COOLDOWN = 60 * 1000;
+
+/**
  * Người dùng được nhập sai tối đa 5 lần.
  */
 const MAX_ATTEMPTS = 5;
@@ -119,9 +160,7 @@ const OTP_LENGTH = 6;
  * =========================================================
  */
 
-const normalizeEmail = (
-  email: string
-): string => {
+const normalizeEmail = (email: string): string => {
   return email.trim().toLowerCase();
 };
 
@@ -129,11 +168,21 @@ const normalizeEmail = (
  * =========================================================
  * HELPER: GET OTP KEY
  * =========================================================
+ *
+ * Mỗi loại OTP có một key riêng.
+ *
+ * Ví dụ:
+ *
+ * user@gmail.com:register
+ * user@gmail.com:reset_password
+ * user@gmail.com:change_email
+ *
+ * =========================================================
  */
 
 const getOtpKey = (
   email: string,
-  type: OTPType
+  type: OTPType,
 ): string => {
   return `${normalizeEmail(email)}:${type}`;
 };
@@ -147,12 +196,6 @@ const getOtpKey = (
  *
  * Sử dụng crypto.randomInt thay vì Math.random()
  * để OTP khó đoán hơn.
- *
- * Ví dụ:
- *
- * 123456
- * 845291
- * 390127
  *
  * =========================================================
  */
@@ -169,45 +212,73 @@ export const generateOtp = (): string => {
  * CREATE OTP
  * =========================================================
  *
- * - Tạo OTP.
+ * MỤC ĐÍCH:
+ * - Tạo OTP mới.
  * - Lưu OTP vào RAM.
- * - Reset số lần thử.
+ * - Reset số lần nhập sai.
  * - Reset trạng thái verified.
+ * - Thiết lập thời gian hết hạn.
+ * - Thiết lập thời gian cooldown.
+ *
+ * userId:
+ * - Có thể truyền khi OTP cần gắn với user cụ thể.
+ * - Đặc biệt dùng cho change_email.
  *
  * =========================================================
  */
 
 export const createOtp = (
   email: string,
-  type: OTPType
+  type: OTPType,
+  userId?: string,
 ): string => {
-  const normalizedEmail =
-    normalizeEmail(email);
+  const normalizedEmail = normalizeEmail(email);
 
   const otp = generateOtp();
+
+  const now = Date.now();
 
   const otpData: OTPData = {
     otp,
 
-    expiresAt:
-      Date.now() + OTP_EXPIRE_TIME,
+    /**
+     * OTP có hiệu lực trong 5 phút.
+     */
+    expiresAt: now + OTP_EXPIRE_TIME,
 
+    /**
+     * Chỉ được yêu cầu OTP mới
+     * sau 60 giây.
+     */
+    nextResendAt: now + OTP_RESEND_COOLDOWN,
+
+    /**
+     * Reset số lần nhập sai.
+     */
     attempts: 0,
 
+    /**
+     * Loại OTP.
+     */
     type,
 
+    /**
+     * OTP mới chưa được xác thực.
+     */
     verified: false,
+
+    /**
+     * User ID nếu có.
+     */
+    userId,
   };
 
   const key = getOtpKey(
     normalizedEmail,
-    type
+    type,
   );
 
-  otpStore.set(
-    key,
-    otpData
-  );
+  otpStore.set(key, otpData);
 
   return otp;
 };
@@ -219,41 +290,38 @@ export const createOtp = (
  *
  * Lấy OTP hiện tại.
  *
+ * Nếu OTP không tồn tại:
+ * → return null
+ *
  * Nếu OTP hết hạn:
- * → Xóa khỏi RAM.
- * → Trả về null.
+ * → Xóa khỏi RAM
+ * → return null
  *
  * =========================================================
  */
 
 export const getOtp = (
   email: string,
-  type: OTPType
+  type: OTPType,
 ): OTPData | null => {
   const key = getOtpKey(
     email,
-    type
+    type,
   );
 
-  const otpData =
-    otpStore.get(key);
+  const otpData = otpStore.get(key);
 
   /**
-   * Không tồn tại OTP.
+   * OTP không tồn tại.
    */
-
   if (!otpData) {
     return null;
   }
 
   /**
-   * Kiểm tra hết hạn.
+   * OTP đã hết hạn.
    */
-
-  if (
-    Date.now() >
-    otpData.expiresAt
-  ) {
+  if (Date.now() > otpData.expiresAt) {
     otpStore.delete(key);
 
     return null;
@@ -267,34 +335,108 @@ export const getOtp = (
  * SEND OTP
  * =========================================================
  *
- * Flow:
+ * MỤC ĐÍCH:
+ * - Kiểm tra cooldown.
+ * - Tạo OTP.
+ * - Lưu OTP.
+ * - Gửi OTP qua email.
  *
- * createOtp()
- *      ↓
- * Lấy OTP
- *      ↓
- * sendOtpEmail()
+ * Return:
+ *
+ * success = true
+ * → gửi thành công.
+ *
+ * success = false
+ * → đang trong thời gian cooldown.
  *
  * =========================================================
  */
 
 export const sendOtp = async (
   email: string,
-  type: OTPType
-): Promise<void> => {
-  const normalizedEmail =
-    normalizeEmail(email);
+  type: OTPType,
+  userId?: string,
+): Promise<{
+  success: boolean;
+  message?: string;
+  retryAfter?: number;
+}> => {
+  const normalizedEmail = normalizeEmail(email);
+
+  const existingOtp = getOtp(
+    normalizedEmail,
+    type,
+  );
+
+  const now = Date.now();
+
+  /**
+   * -------------------------------------------------------
+   * KIỂM TRA COOLDOWN
+   * -------------------------------------------------------
+   *
+   * Không cho phép gửi OTP mới liên tục.
+   */
+  if (
+    existingOtp &&
+    now < existingOtp.nextResendAt
+  ) {
+    const retryAfter = Math.ceil(
+      (existingOtp.nextResendAt - now) / 1000,
+    );
+
+    return {
+      success: false,
+      message: `Vui lòng đợi ${retryAfter} giây trước khi yêu cầu gửi lại OTP mới.`,
+      retryAfter,
+    };
+  }
+
+  /**
+   * -------------------------------------------------------
+   * TẠO OTP MỚI
+   * -------------------------------------------------------
+   */
 
   const otp = createOtp(
     normalizedEmail,
-    type
+    type,
+    userId,
   );
 
-  await sendOtpEmail(
-    normalizedEmail,
-    otp,
-    type
-  );
+  try {
+    /**
+     * -----------------------------------------------------
+     * GỬI OTP QUA EMAIL
+     * -----------------------------------------------------
+     */
+
+    await sendOtpEmail(
+      normalizedEmail,
+      otp,
+      type,
+    );
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    /**
+     * -----------------------------------------------------
+     * NẾU GỬI EMAIL THẤT BẠI
+     * -----------------------------------------------------
+     *
+     * Xóa OTP vừa tạo để người dùng
+     * có thể yêu cầu gửi lại.
+     */
+
+    invalidateOtpService(
+      normalizedEmail,
+      type,
+    );
+
+    throw error;
+  }
 };
 
 /**
@@ -307,13 +449,17 @@ export const sendOtp = async (
  * 1. OTP có tồn tại không?
  * 2. OTP có hết hạn không?
  * 3. OTP đã được verify chưa?
- * 4. OTP có đúng không?
- * 5. Số lần nhập sai có vượt giới hạn không?
+ * 4. UserId có đúng không?
+ * 5. OTP có đúng không?
+ * 6. Số lần nhập sai có vượt giới hạn không?
  *
  * Return:
  *
- * true  → OTP hợp lệ.
- * false → OTP không hợp lệ.
+ * true:
+ * → OTP hợp lệ.
+ *
+ * false:
+ * → OTP không hợp lệ.
  *
  * =========================================================
  */
@@ -321,26 +467,28 @@ export const sendOtp = async (
 export const verifyOtpService = (
   email: string,
   otp: string,
-  type: OTPType
+  type: OTPType,
+  userId?: string,
 ): boolean => {
-  const normalizedEmail =
-    normalizeEmail(email);
+  const normalizedEmail = normalizeEmail(email);
 
-  const normalizedOtp =
-    otp.trim();
+  const normalizedOtp = otp.trim();
 
   const key = getOtpKey(
     normalizedEmail,
-    type
+    type,
   );
 
   const otpData = getOtp(
     normalizedEmail,
-    type
+    type,
   );
 
   /**
-   * Không tồn tại hoặc đã hết hạn.
+   * -------------------------------------------------------
+   * BƯỚC 1:
+   * OTP không tồn tại hoặc đã hết hạn.
+   * -------------------------------------------------------
    */
 
   if (!otpData) {
@@ -348,9 +496,10 @@ export const verifyOtpService = (
   }
 
   /**
+   * -------------------------------------------------------
+   * BƯỚC 2:
    * OTP đã được sử dụng.
-   *
-   * Không cho phép sử dụng lại.
+   * -------------------------------------------------------
    */
 
   if (otpData.verified) {
@@ -358,22 +507,58 @@ export const verifyOtpService = (
   }
 
   /**
-   * Kiểm tra OTP.
+   * -------------------------------------------------------
+   * BƯỚC 3:
+   * KIỂM TRA USER ID
+   * -------------------------------------------------------
+   *
+   * Nếu OTP được gắn userId thì bắt buộc
+   * userId khi verify phải trùng.
+   *
+   * Đặc biệt dùng cho change_email.
    */
 
   if (
-    otpData.otp !==
-    normalizedOtp
+    otpData.userId &&
+    otpData.userId !== userId
+  ) {
+    return false;
+  }
+
+  /**
+   * -------------------------------------------------------
+   * BƯỚC 4:
+   * KIỂM TRA SỐ LẦN NHẬP SAI
+   * -------------------------------------------------------
+   */
+
+  if (
+    otpData.attempts >= MAX_ATTEMPTS
+  ) {
+    otpStore.delete(key);
+
+    return false;
+  }
+
+  /**
+   * -------------------------------------------------------
+   * BƯỚC 5:
+   * KIỂM TRA OTP
+   * -------------------------------------------------------
+   */
+
+  if (
+    otpData.otp !== normalizedOtp
   ) {
     otpData.attempts += 1;
 
     /**
-     * Vượt quá số lần nhập sai.
+     * Nếu nhập sai đủ 5 lần:
+     * → Xóa OTP.
      */
 
     if (
-      otpData.attempts >=
-      MAX_ATTEMPTS
+      otpData.attempts >= MAX_ATTEMPTS
     ) {
       otpStore.delete(key);
 
@@ -386,21 +571,24 @@ export const verifyOtpService = (
 
     otpStore.set(
       key,
-      otpData
+      otpData,
     );
 
     return false;
   }
 
   /**
-   * OTP chính xác.
+   * -------------------------------------------------------
+   * BƯỚC 6:
+   * OTP CHÍNH XÁC
+   * -------------------------------------------------------
    */
 
   otpData.verified = true;
 
   otpStore.set(
     key,
-    otpData
+    otpData,
   );
 
   return true;
@@ -417,16 +605,14 @@ export const verifyOtpService = (
  */
 
 export const isRegisterEmailVerified = (
-  email: string
+  email: string,
 ): boolean => {
   const otpData = getOtp(
     email,
-    "register"
+    "register",
   );
 
-  return (
-    otpData?.verified === true
-  );
+  return otpData?.verified === true;
 };
 
 /**
@@ -440,6 +626,7 @@ export const isRegisterEmailVerified = (
  *
  * - Đăng ký thành công.
  * - Reset password thành công.
+ * - Đổi email thành công.
  * - OTP bị khóa do nhập sai quá nhiều lần.
  *
  * =========================================================
@@ -447,11 +634,11 @@ export const isRegisterEmailVerified = (
 
 export const invalidateOtpService = (
   email: string,
-  type: OTPType
+  type: OTPType,
 ): void => {
   const key = getOtpKey(
     email,
-    type
+    type,
   );
 
   otpStore.delete(key);
