@@ -17,6 +17,7 @@ import cors from "cors";
 
 // Import routes
 import authRoutes from "./src/routes/auth.routes";
+import brandRoutes from "./src/routes/brand.routes";
 
 const app = express();
 
@@ -48,6 +49,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Authentication
 app.use("/api/auth", authRoutes);
+
+// Brand
+app.use("/api/brands", brandRoutes);
 /**
  * =========================================================
  * HEALTH CHECK
