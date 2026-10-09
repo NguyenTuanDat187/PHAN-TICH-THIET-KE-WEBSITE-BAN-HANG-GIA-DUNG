@@ -12,7 +12,11 @@
     "init-db": "tsx scripts/init-db.ts",
     "test:category": "tsx scripts/test-category.ts",
     "test:attribute": "tsx scripts/test-attribute.ts",
-    "test": "npm run test:category && npm run test:attribute"
+    "test:product": "tsx scripts/test-product.ts",
+    "test:product-variant": "tsx scripts/test-product-variant.ts",
+    "test:product-media": "tsx scripts/test-product-media.ts",
+    "test:session3": "tsx scripts/test-session3-integration.ts",
+    "test": "npm run test:category && npm run test:attribute && npm run test:product && npm run test:product-variant && npm run test:product-media && npm run test:session3"
   },
   "keywords": [],
   "author": "",
