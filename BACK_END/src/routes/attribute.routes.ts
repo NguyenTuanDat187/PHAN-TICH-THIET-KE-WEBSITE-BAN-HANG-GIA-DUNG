@@ -17,10 +17,8 @@ import * as attributeController from "../controllers/attribute.controller";
 
 const router = Router();
 
-// ================= PUBLIC ROUTES =================
 router.get("/", attributeController.getAllAttributes);
 
-// ================= ADMIN ROUTES =================
 router.post(
   "/admin",
   authMiddleware,
@@ -30,7 +28,6 @@ router.post(
   attributeController.createAttribute,
 );
 
-// Các route /admin/values/:valueId đặt trước /admin/:id để "values" không bị nuốt vào :id
 router.put(
   "/admin/values/:valueId",
   authMiddleware,
@@ -76,7 +73,6 @@ router.delete(
   attributeController.deleteAttribute,
 );
 
-// GET /:id đặt cuối để không che các route /admin/*
 router.get(
   "/:id",
   attributeIdParamValidator,

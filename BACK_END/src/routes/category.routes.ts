@@ -18,7 +18,6 @@ import * as categoryController from "../controllers/category.controller";
 
 const router = Router();
 
-// ================= PUBLIC ROUTES =================
 router.get(
   "/",
   queryCategoryValidator,
@@ -35,7 +34,6 @@ router.get(
   categoryController.getPublicCategoryBySlug,
 );
 
-// ================= ADMIN ROUTES =================
 router.get(
   "/admin/all",
   authMiddleware,
@@ -99,7 +97,6 @@ router.delete(
   categoryController.deleteCategory,
 );
 
-// GET /:id đặt cuối để không che các route /admin/*, /tree, /slug/*
 router.get(
   "/:id",
   categoryIdParamValidator,
