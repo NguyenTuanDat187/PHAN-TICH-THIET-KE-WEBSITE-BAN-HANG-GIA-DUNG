@@ -9,14 +9,16 @@ const connectDatabase = async (): Promise<void> => {
             return;
         }
 
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 5000,
+        });
 
         console.log("=================================");
         console.log("✅ MongoDB connected successfully");
         console.log(`📦 Database: ${mongoose.connection.name}`);
         console.log("=================================");
     } catch (error) {
-        console.warn("⚠️ MongoDB connection failed. App vẫn chạy ở chế độ dev, nhưng cần database để dùng API liên quan đến dữ liệu.", error);
+        console.warn("⚠️ MongoDB connection failed. Server vẫn chạy ở chế độ dev. Vui lòng bật MongoDB service/Docker hoặc cấu hình MONGO_URI trong .env khi cần truy vấn dữ liệu.");
     }
 };
 

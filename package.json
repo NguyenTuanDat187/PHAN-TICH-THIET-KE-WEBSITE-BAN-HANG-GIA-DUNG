@@ -8,10 +8,17 @@
   "main": "index.js",
   "devDependencies": {
     "@types/node": "^26.6.4",
+    "concurrently": "^10.0.6",
     "ts-node": "^10.9.2",
     "typescript": "^7.0.2"
   },
   "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND,ADMIN\" -c \"blue,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:admin\"",
+    "dev:backend": "npm run dev --prefix BACK_END",
+    "dev:frontend": "npm run dev --prefix FRONT_END",
+    "dev:admin": "npm run dev --prefix ADMIN",
+    "install:all": "npm install && npm install --prefix BACK_END && npm install --prefix FRONT_END && npm install --prefix ADMIN",
+    "build:all": "npm run build --prefix BACK_END && npm run build --prefix FRONT_END && npm run build --prefix ADMIN",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
