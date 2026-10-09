@@ -10,7 +10,9 @@
     "create-admin": "tsx scripts/create-admin.ts",
     "check-db": "tsx scripts/check-db.ts",
     "init-db": "tsx scripts/init-db.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:category": "tsx scripts/test-category.ts",
+    "test:attribute": "tsx scripts/test-attribute.ts",
+    "test": "npm run test:category && npm run test:attribute"
   },
   "keywords": [],
   "author": "",
