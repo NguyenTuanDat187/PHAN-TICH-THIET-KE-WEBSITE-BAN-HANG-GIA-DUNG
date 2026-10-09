@@ -18,6 +18,8 @@ import cors from "cors";
 // Import routes
 import authRoutes from "./src/routes/auth.routes";
 import brandRoutes from "./src/routes/brand.routes";
+import categoryRoutes from "./src/routes/category.routes";
+import attributeRoutes from "./src/routes/attribute.routes";
 
 const app = express();
 
@@ -52,6 +54,13 @@ app.use("/api/auth", authRoutes);
 
 // Brand
 app.use("/api/brands", brandRoutes);
+
+// Category
+app.use("/api/categories", categoryRoutes);
+
+// Attribute
+app.use("/api/attributes", attributeRoutes);
+
 /**
  * =========================================================
  * HEALTH CHECK
