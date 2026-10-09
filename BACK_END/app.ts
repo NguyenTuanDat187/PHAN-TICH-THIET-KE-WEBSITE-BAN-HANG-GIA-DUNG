@@ -20,6 +20,9 @@ import authRoutes from "./src/routes/auth.routes";
 import brandRoutes from "./src/routes/brand.routes";
 import categoryRoutes from "./src/routes/category.routes";
 import attributeRoutes from "./src/routes/attribute.routes";
+import productRoutes from "./src/routes/product.routes";
+import productVariantRoutes from "./src/routes/product-variant.routes";
+import productMediaRoutes from "./src/routes/product-media.routes";
 
 const app = express();
 
@@ -60,6 +63,15 @@ app.use("/api/categories", categoryRoutes);
 
 // Attribute
 app.use("/api/attributes", attributeRoutes);
+
+// Product
+app.use("/api/products", productRoutes);
+
+// Product Variant
+app.use("/api", productVariantRoutes);
+
+// Product Media
+app.use("/api", productMediaRoutes);
 
 /**
  * =========================================================
