@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import cors from "cors";
-=======
 /**
  * =========================================================
  * FILE: BACK_END/src/app.ts
@@ -15,7 +12,6 @@ import cors from "cors";
  * =========================================================
  */
 
->>>>>>> 05d35ecfdb67623860d5c624f3540c18babc63b8
 import express from "express";
 import cors from "cors";
 
@@ -24,18 +20,6 @@ import authRoutes from "./src/routes/auth.routes";
 
 const app = express();
 
-<<<<<<< HEAD
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (_req, res) => {
-    res.json({
-        message: "API E-Commerce Backend is running",
-        timestamp: new Date().toISOString()
-    });
-});
-
-=======
 /**
  * =========================================================
  * GLOBAL MIDDLEWARE
@@ -96,5 +80,4 @@ app.use((_req, res) => {
  * =========================================================
  */
 
->>>>>>> 05d35ecfdb67623860d5c624f3540c18babc63b8
 export default app;
