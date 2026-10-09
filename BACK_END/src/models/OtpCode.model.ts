@@ -22,7 +22,7 @@ const otpCodeSchema = new Schema<IOtpCode>(
       enum: ["register", "forgot_password", "verify_email"],
       required: true,
     },
-    expiresAt: { type: Date, required: true, index: true },
+    expiresAt: { type: Date, required: true },
     verifiedAt: { type: Date, default: null },
     attempts: { type: Number, default: 0, min: 0 },
   },

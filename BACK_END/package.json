@@ -8,6 +8,8 @@
     "start": "tsx server.ts",
     "build": "tsc",
     "create-admin": "tsx scripts/create-admin.ts",
+    "check-db": "tsx scripts/check-db.ts",
+    "init-db": "tsx scripts/init-db.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
