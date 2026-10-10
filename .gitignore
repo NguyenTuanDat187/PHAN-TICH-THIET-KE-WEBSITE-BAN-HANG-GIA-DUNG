@@ -25,3 +25,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# Documents & Internal Notes
+DOCUMENT/
+BACK_END/DOCUMENT/

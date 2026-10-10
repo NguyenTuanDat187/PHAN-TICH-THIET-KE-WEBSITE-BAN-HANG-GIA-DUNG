@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import cors from "cors";
-=======
 /**
  * =========================================================
  * FILE: BACK_END/src/app.ts
@@ -15,27 +12,20 @@ import cors from "cors";
  * =========================================================
  */
 
->>>>>>> 05d35ecfdb67623860d5c624f3540c18babc63b8
 import express from "express";
 import cors from "cors";
 
 // Import routes
 import authRoutes from "./src/routes/auth.routes";
+import brandRoutes from "./src/routes/brand.routes";
+import categoryRoutes from "./src/routes/category.routes";
+import attributeRoutes from "./src/routes/attribute.routes";
+import productRoutes from "./src/routes/product.routes";
+import productVariantRoutes from "./src/routes/product-variant.routes";
+import productMediaRoutes from "./src/routes/product-media.routes";
 
 const app = express();
 
-<<<<<<< HEAD
-app.use(cors());
-app.use(express.json());
-
-app.get("/", (_req, res) => {
-    res.json({
-        message: "API E-Commerce Backend is running",
-        timestamp: new Date().toISOString()
-    });
-});
-
-=======
 /**
  * =========================================================
  * GLOBAL MIDDLEWARE
@@ -64,6 +54,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // Authentication
 app.use("/api/auth", authRoutes);
+
+// Brand
+app.use("/api/brands", brandRoutes);
+
+// Category
+app.use("/api/categories", categoryRoutes);
+
+// Attribute
+app.use("/api/attributes", attributeRoutes);
+
+// Product
+app.use("/api/products", productRoutes);
+
+// Product Variant
+app.use("/api", productVariantRoutes);
+
+// Product Media
+app.use("/api", productMediaRoutes);
+
 /**
  * =========================================================
  * HEALTH CHECK
@@ -96,5 +105,4 @@ app.use((_req, res) => {
  * =========================================================
  */
 
->>>>>>> 05d35ecfdb67623860d5c624f3540c18babc63b8
 export default app;
