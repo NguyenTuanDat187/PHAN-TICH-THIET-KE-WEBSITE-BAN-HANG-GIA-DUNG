@@ -27,7 +27,7 @@
  *
  * SERVICE CÓ:
  * - Kiểm tra User.
- * - Kiểm tra role.
+ * - Kiểm tra role. 
  * - Kiểm tra trạng thái tài khoản.
  * - Hash password bằng bcrypt.
  * - Kiểm tra password.
@@ -1326,6 +1326,7 @@ export const adminRequestChangeEmail =
     const user =
       await User.findById(userId);
 
+
     if (!user) {
       throw new Error(
         "Không tìm thấy tài khoản admin."
@@ -1399,7 +1400,9 @@ export const adminRequestChangeEmail =
 
     await sendOtp(
       normalizedNewEmail,
-      "change_email"
+      "change_email",
+      userId
+      
     );
   };
 
@@ -1458,7 +1461,9 @@ export const adminVerifyChangeEmail =
       verifyOtpService(
         normalizedNewEmail,
         otp,
-        "change_email"
+        "change_email",
+        userId
+
       );
 
     if (!otpValid) {
