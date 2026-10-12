@@ -23,6 +23,9 @@ import attributeRoutes from "./src/routes/attribute.routes";
 import productRoutes from "./src/routes/product.routes";
 import productVariantRoutes from "./src/routes/product-variant.routes";
 import productMediaRoutes from "./src/routes/product-media.routes";
+import cartRoutes from "./src/routes/cart.routes";
+import wishlistRoutes from "./src/routes/wishlist.routes";
+import couponRoutes from "./src/routes/coupon.routes";
 
 const app = express();
 
@@ -72,6 +75,15 @@ app.use("/api", productVariantRoutes);
 
 // Product Media
 app.use("/api", productMediaRoutes);
+
+// Cart
+app.use("/api/cart", cartRoutes);
+
+// Wishlist
+app.use("/api/wishlist", wishlistRoutes);
+
+// Coupon
+app.use("/api/coupons", couponRoutes);
 
 /**
  * =========================================================
