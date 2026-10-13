@@ -1,6 +1,7 @@
-@import '../tokens.css';
+@import "../tokens.css";
 
 .field {
+  --checkbox-size: 18px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -35,12 +36,12 @@
 .box {
   display: inline-grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
   margin-top: 1px;
   flex-shrink: 0;
-  border: 1.5px solid var(--ui-border);
-  border-radius: 5px;
+  border: max(1.5px, calc(var(--checkbox-size) * 0.08)) solid var(--ui-border);
+  border-radius: calc(var(--checkbox-size) * 0.28);
   background: var(--ui-surface);
 }
 
@@ -56,18 +57,19 @@
 }
 
 .input:checked + .box::after {
-  content: '';
-  width: 5px;
-  height: 9px;
+  content: "";
+  width: calc(var(--checkbox-size) * 0.28);
+  height: calc(var(--checkbox-size) * 0.5);
   border: solid var(--ui-text-on-primary);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg) translate(-1px, -1px);
+  border-width: 0 calc(var(--checkbox-size) * 0.11)
+    calc(var(--checkbox-size) * 0.11) 0;
+  transform: rotate(45deg) translate(-8%, -8%);
 }
 
 .input:indeterminate + .box::after {
-  content: '';
-  width: 8px;
-  height: 2px;
+  content: "";
+  width: calc(var(--checkbox-size) * 0.44);
+  height: max(2px, calc(var(--checkbox-size) * 0.11));
   background: var(--ui-text-on-primary);
 }
 
@@ -103,4 +105,8 @@
   font-size: 13px;
   line-height: 1.4;
   color: var(--ui-danger);
+}
+
+.alignCenter {
+  align-items: center;
 }

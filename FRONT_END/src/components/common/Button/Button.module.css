@@ -67,6 +67,36 @@
   background: var(--ui-primary-active);
 }
 
+.success {
+  background: var(--color-success-strong);
+  color: var(--ui-text-on-primary);
+}
+
+.success:hover:not(:disabled) {
+  background: var(--color-success-strong-hover);
+}
+
+.success:active:not(:disabled) {
+  background: var(--color-success-strong-press);
+}
+
+.error {
+  background: var(--color-danger-normal);
+  color: var(--ui-text-on-primary);
+}
+
+.error:hover:not(:disabled) {
+  background: var(--color-danger-normal-hover);
+}
+
+.error:active:not(:disabled) {
+  background: var(--color-danger-normal-active);
+}
+
+.error:focus-visible {
+  box-shadow: var(--ui-danger-ring);
+}
+
 .secondary {
   background: var(--ui-secondary);
   color: var(--ui-text);

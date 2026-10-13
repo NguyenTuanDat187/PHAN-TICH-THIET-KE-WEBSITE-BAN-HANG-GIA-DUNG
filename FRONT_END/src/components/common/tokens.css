@@ -1,9 +1,9 @@
-@import '../../styles/colors.css';
+@import "../../styles/colors.css";
 
 :root {
-  --ui-primary: var(--color-green-500);
-  --ui-primary-hover: var(--color-green-600);
-  --ui-primary-active: var(--color-green-700);
+  --ui-primary: var(--color-blue-900);
+  --ui-primary-hover: var(--color-blue-800);
+  --ui-primary-active: var(--color-blue-700);
   --ui-text: var(--color-on-light-primary);
   --ui-text-muted: var(--color-grey-700);
   --ui-text-on-primary: var(--color-on-dark-primary);
@@ -14,8 +14,8 @@
   --ui-danger: var(--color-danger-normal);
   --ui-danger-bg: var(--color-danger-light);
   --ui-radius: 10px;
-  --ui-focus: 0 0 0 3px #44BA464D;
-  --ui-danger-ring: 0 0 0 3px #ED1C244D;
+  --ui-focus: 0 0 0 3px #0a394d4d;
+  --ui-danger-ring: 0 0 0 3px #ed1c244d;
 }
 
 @media (prefers-color-scheme: dark) {
