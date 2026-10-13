@@ -1,10 +1,9 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import mongoose from "mongoose";
 import app from "./app";
 import connectDatabase from "./src/config/database";
 import * as models from "./src/models";
 
-dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
