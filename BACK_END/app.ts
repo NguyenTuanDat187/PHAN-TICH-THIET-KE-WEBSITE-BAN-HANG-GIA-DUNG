@@ -23,6 +23,10 @@ import attributeRoutes from "./src/routes/attribute.routes";
 import productRoutes from "./src/routes/product.routes";
 import productVariantRoutes from "./src/routes/product-variant.routes";
 import productMediaRoutes from "./src/routes/product-media.routes";
+import userAddressRoutes from "./src/routes/userAddress.routes";
+import errorMiddleware from "./src/middlewares/error.middleware";
+
+
 
 const app = express();
 
@@ -54,6 +58,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Authentication
 app.use("/api/auth", authRoutes);
+app.use("/api/user-addresses", userAddressRoutes);
 
 // Brand
 app.use("/api/brands", brandRoutes);
@@ -72,6 +77,11 @@ app.use("/api", productVariantRoutes);
 
 // Product Media
 app.use("/api", productMediaRoutes);
+app.use("/api/user-addresses", userAddressRoutes);
+
+
+
+app.use(errorMiddleware);
 
 /**
  * =========================================================
