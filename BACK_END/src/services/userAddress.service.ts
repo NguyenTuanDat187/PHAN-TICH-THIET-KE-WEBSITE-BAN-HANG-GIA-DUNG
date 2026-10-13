@@ -1,14 +1,31 @@
 
-import mongoose, { Types } from "mongoose";
-import UserAddress from "../models/UserAddress.model";
-
 /**
- * FILE: src/services/userAddress.service.ts
+ * FILE: BACK_END/src/services/userAddress.service.ts
  *
- * Nghiệp vụ quản lý địa chỉ giao hàng của người dùng.
+ * NHIỆM VỤ:
+ * - Lấy danh sách địa chỉ giao hàng.
+ * - Lấy chi tiết địa chỉ.
+ * - Thêm địa chỉ mới.
+ * - Cập nhật địa chỉ.
+ * - Xóa địa chỉ.
+ * - Đặt địa chỉ mặc định.
+ *
+ * NGUYÊN TẮC:
+ * - Mỗi địa chỉ phải thuộc người dùng đang đăng nhập.
+ * - Không cho phép truy cập địa chỉ của người khác.
+ * - Không sử dụng userId do client tự gửi để xác định chủ sở hữu.
  */
 
-interface AddressInput {
+import { Types } from "mongoose";
+
+import UserAddress, {
+  type IUserAddress,
+} from "../models/UserAddress.model";
+
+/**
+ * Dữ liệu đầu vào khi tạo địa chỉ.
+ */
+export interface CreateUserAddressInput {
   recipientName: string;
   phone: string;
   addressLine: string;
@@ -18,250 +35,316 @@ interface AddressInput {
   isDefault?: boolean;
 }
 
-const normalizeOptionalFields = (
-  input: AddressInput
-): AddressInput => ({
-  ...input,
-  ward: input.ward?.trim() || null,
-  district: input.district?.trim() || null,
-  province: input.province?.trim() || null,
-});
+/**
+ * Dữ liệu đầu vào khi cập nhật địa chỉ.
+ */
+export type UpdateUserAddressInput =
+  Partial<CreateUserAddressInput>;
 
+/**
+ * Tạo lỗi có statusCode để middleware xử lý lỗi chung sử dụng.
+ */
+const throwError = (
+  message: string,
+  statusCode: number
+): never => {
+  const error = new Error(message) as Error & {
+    statusCode: number;
+  };
+
+  error.statusCode = statusCode;
+
+  throw error;
+};
+
+/**
+ * Kiểm tra ID người dùng có hợp lệ hay không.
+ */
 const validateUserId = (userId: string): void => {
   if (!Types.ObjectId.isValid(userId)) {
-    throw new Error("ID người dùng không hợp lệ.");
+    throwError("ID người dùng không hợp lệ.", 400);
   }
 };
 
-// Lấy tất cả địa chỉ của người dùng hiện tại.
-export const getMyAddressesService = async (
-  userId: string
-) => {
-  validateUserId(userId);
-
-  return UserAddress.find({ userId })
-    .sort({ isDefault: -1, createdAt: -1 })
-    .lean();
+/**
+ * Kiểm tra ID địa chỉ có hợp lệ hay không.
+ */
+const validateAddressId = (addressId: string): void => {
+  if (!Types.ObjectId.isValid(addressId)) {
+    throwError("ID địa chỉ không hợp lệ.", 400);
+  }
 };
 
-// Lấy một địa chỉ thuộc người dùng hiện tại.
-export const getMyAddressByIdService = async (
+
+/**
+ * Tìm địa chỉ thuộc đúng người dùng.
+ * Không tìm thấy thì ném lỗi 404.
+ */
+
+
+/**
+ * Tìm địa chỉ thuộc đúng tài khoản đang đăng nhập.
+ *
+ * Không tìm thấy hoặc địa chỉ thuộc tài khoản khác:
+ * trả về lỗi 404.
+ */
+const findOwnedAddress = async (
   userId: string,
   addressId: string
-) => {
-  validateUserId(userId);
-
-  if (!Types.ObjectId.isValid(addressId)) {
-    throw new Error("ID địa chỉ không hợp lệ.");
-  }
-
+): Promise<IUserAddress> => {
   const address = await UserAddress.findOne({
     _id: addressId,
     userId,
-  }).lean();
+  }).exec();
 
   if (!address) {
-    throw new Error("Không tìm thấy địa chỉ.");
+    return throwError(
+      "Không tìm thấy địa chỉ giao hàng.",
+      404
+    );
   }
 
   return address;
 };
 
-// Tạo địa chỉ mới.
-export const createAddressService = async (
-  userId: string,
-  input: AddressInput
-) => {
-  validateUserId(userId);
 
-  const data = normalizeOptionalFields(input);
 
-  // Đảm bảo chỉ có một địa chỉ mặc định cho mỗi người dùng.
-  // Dùng transaction để cập nhật địa chỉ mặc định và tạo địa chỉ mới.
-  const session = await mongoose.startSession();
-
-  try {
-    let createdAddress: unknown;
-
-    await session.withTransaction(async () => {
-      const hasAddress = await UserAddress.exists({
-        userId,
-      }).session(session);
-
-      const shouldBeDefault =
-        data.isDefault === true || !hasAddress;
-
-      if (shouldBeDefault) {
-        await UserAddress.updateMany(
-          { userId, isDefault: true },
-          { $set: { isDefault: false } },
-          { session }
-        );
-      }
-
-      const [created] = await UserAddress.create(
-        [
-          {
-            ...data,
-            userId,
-            isDefault: shouldBeDefault,
-          },
-        ],
-        { session }
-      );
-
-      createdAddress = created;
-    });
-
-    return createdAddress;
-  } finally {
-    await session.endSession();
-  }
+/**
+ * Bỏ trạng thái mặc định của các địa chỉ thuộc một người dùng.
+ */
+const clearDefaultAddress = async (
+  userId: string
+): Promise<void> => {
+  await UserAddress.updateMany(
+    {
+      userId,
+      isDefault: true,
+    },
+    {
+      $set: {
+        isDefault: false,
+      },
+    }
+  ).exec();
 };
 
-// Cập nhật địa chỉ.
-export const updateAddressService = async (
+/**
+ * Lấy danh sách địa chỉ của người dùng.
+ *
+ * Địa chỉ mặc định được hiển thị trước.
+ */
+export const getUserAddressesService = async (
+  userId: string
+): Promise<IUserAddress[]> => {
+  validateUserId(userId);
+
+  return UserAddress.find({
+    userId,
+  })
+    .sort({
+      isDefault: -1,
+      createdAt: -1,
+    })
+    .exec();
+};
+
+/**
+ * Lấy chi tiết một địa chỉ.
+ */
+export const getUserAddressByIdService = async (
+  userId: string,
+  addressId: string
+): Promise<IUserAddress> => {
+  validateUserId(userId);
+  validateAddressId(addressId);
+
+  return findOwnedAddress(userId, addressId);
+};
+
+/**
+ * Tạo địa chỉ mới.
+ *
+ * Quy tắc:
+ * - Địa chỉ đầu tiên tự động là mặc định.
+ * - Nếu isDefault = true, địa chỉ mới trở thành mặc định.
+ * - Các địa chỉ mặc định cũ của người dùng bị bỏ mặc định.
+ */
+export const createUserAddressService = async (
+  userId: string,
+  input: CreateUserAddressInput
+): Promise<IUserAddress> => {
+  validateUserId(userId);
+
+  const hasAddress = await UserAddress.exists({
+    userId,
+  });
+
+  const shouldBeDefault =
+    input.isDefault === true || !hasAddress;
+
+  if (shouldBeDefault) {
+    await clearDefaultAddress(userId);
+  }
+
+  const address = await UserAddress.create({
+    userId,
+    recipientName: input.recipientName,
+    phone: input.phone,
+    addressLine: input.addressLine,
+    ward: input.ward ?? null,
+    district: input.district ?? null,
+    province: input.province ?? null,
+    isDefault: shouldBeDefault,
+  });
+
+  return address;
+};
+
+/**
+ * Cập nhật địa chỉ.
+ *
+ * Chỉ cập nhật các trường được cho phép.
+ * Không cho phép thay đổi userId thông qua input.
+ */
+export const updateUserAddressService = async (
   userId: string,
   addressId: string,
-  input: Partial<AddressInput>
-) => {
+  input: UpdateUserAddressInput
+): Promise<IUserAddress> => {
+  // BƯỚC 1: Kiểm tra ID.
   validateUserId(userId);
+  validateAddressId(addressId);
 
-  if (!Types.ObjectId.isValid(addressId)) {
-    throw new Error("ID địa chỉ không hợp lệ.");
+  // BƯỚC 2: Tìm địa chỉ thuộc đúng người dùng.
+  const address = await findOwnedAddress(
+    userId,
+    addressId
+  );
+
+  // BƯỚC 3: Xử lý yêu cầu đặt mặc định.
+  if (input.isDefault === true) {
+    await clearDefaultAddress(userId);
   }
 
-  const data = normalizeOptionalFields(input as AddressInput);
-
-  const session = await mongoose.startSession();
-
-  try {
-    let updatedAddress: unknown = null;
-
-    await session.withTransaction(async () => {
-      const address = await UserAddress.findOne({
-        _id: addressId,
-        userId,
-      }).session(session);
-
-      if (!address) {
-        throw new Error("Không tìm thấy địa chỉ.");
-      }
-
-      if (data.isDefault === true) {
-        await UserAddress.updateMany(
-          {
-            userId,
-            _id: { $ne: addressId },
-            isDefault: true,
-          },
-          { $set: { isDefault: false } },
-          { session }
-        );
-      }
-
-      Object.assign(address, data);
-
-      await address.save({ session });
-      updatedAddress = address;
-    });
-
-    return updatedAddress;
-  } finally {
-    await session.endSession();
+  // BƯỚC 4: Cập nhật thông tin người nhận.
+  if (input.recipientName !== undefined) {
+    address.recipientName = input.recipientName;
   }
+
+  if (input.phone !== undefined) {
+    address.phone = input.phone;
+  }
+
+  if (input.addressLine !== undefined) {
+    address.addressLine = input.addressLine;
+  }
+
+  if (input.ward !== undefined) {
+    address.ward = input.ward;
+  }
+
+  if (input.district !== undefined) {
+    address.district = input.district;
+  }
+
+  if (input.province !== undefined) {
+    address.province = input.province;
+  }
+
+  // BƯỚC 5: Cập nhật trạng thái mặc định.
+  if (input.isDefault === true) {
+    address.isDefault = true;
+  } else if (
+    input.isDefault === false &&
+    address.isDefault
+  ) {
+    // Nếu bỏ mặc định địa chỉ hiện tại,
+    // chọn một địa chỉ khác làm mặc định nếu có.
+    address.isDefault = false;
+  }
+
+  // BƯỚC 6: Lưu vào MongoDB.
+  await address.save();
+
+  // BƯỚC 7: Trả về document đã cập nhật.
+  return address;
 };
 
-// Đặt địa chỉ hiện có làm mặc định.
-export const setDefaultAddressService = async (
+/**
+ * Xóa địa chỉ.
+ *
+ * Nếu xóa địa chỉ mặc định:
+ * - Tìm địa chỉ còn lại mới nhất.
+ * - Đặt địa chỉ đó làm mặc định.
+ *
+ * Nếu không còn địa chỉ nào, không cần đặt mặc định.
+ */
+export const deleteUserAddressService = async (
   userId: string,
   addressId: string
-) => {
+): Promise<{ deleted: boolean }> => {
   validateUserId(userId);
+  validateAddressId(addressId);
 
-  if (!Types.ObjectId.isValid(addressId)) {
-    throw new Error("ID địa chỉ không hợp lệ.");
+  const address = await findOwnedAddress(
+    userId,
+    addressId
+  );
+
+  const wasDefault = address.isDefault;
+
+  await address.deleteOne();
+
+  if (wasDefault) {
+    const nextAddress = await UserAddress.findOne({
+      userId,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .exec();
+
+    if (nextAddress) {
+      await clearDefaultAddress(userId);
+
+      nextAddress.isDefault = true;
+
+      await nextAddress.save();
+    }
   }
 
-  const session = await mongoose.startSession();
-
-  try {
-    let defaultAddress: unknown = null;
-
-    await session.withTransaction(async () => {
-      const address = await UserAddress.findOne({
-        _id: addressId,
-        userId,
-      }).session(session);
-
-      if (!address) {
-        throw new Error("Không tìm thấy địa chỉ.");
-      }
-
-      await UserAddress.updateMany(
-        { userId, _id: { $ne: addressId } },
-        { $set: { isDefault: false } },
-        { session }
-      );
-
-      address.isDefault = true;
-      await address.save({ session });
-
-      defaultAddress = address;
-    });
-
-    return defaultAddress;
-  } finally {
-    await session.endSession();
-  }
+  return {
+    deleted: true,
+  };
 };
 
-// Xóa địa chỉ của người dùng.
-export const deleteAddressService = async (
+/**
+ * Đặt địa chỉ làm mặc định.
+ *
+ * Chỉ địa chỉ thuộc người dùng đang đăng nhập
+ * mới được phép đặt mặc định.
+ */
+export const setDefaultUserAddressService = async (
   userId: string,
   addressId: string
-) => {
+): Promise<IUserAddress> => {
   validateUserId(userId);
+  validateAddressId(addressId);
 
-  if (!Types.ObjectId.isValid(addressId)) {
-    throw new Error("ID địa chỉ không hợp lệ.");
-  }
+  // BƯỚC 1: Xác nhận quyền sở hữu địa chỉ.
+  const address = await findOwnedAddress(
+    userId,
+    addressId
+  );
 
-  const session = await mongoose.startSession();
+  // BƯỚC 2: Bỏ mặc định các địa chỉ khác.
+  await clearDefaultAddress(userId);
 
-  try {
-    let wasDefault = false;
+  // BƯỚC 3: Đặt địa chỉ được chọn làm mặc định.
+  address.isDefault = true;
 
-    await session.withTransaction(async () => {
-      const address = await UserAddress.findOne({
-        _id: addressId,
-        userId,
-      }).session(session);
+  // BƯỚC 4: Lưu thay đổi.
+  await address.save();
 
-      if (!address) {
-        throw new Error("Không tìm thấy địa chỉ.");
-      }
-
-      wasDefault = address.isDefault;
-      await address.deleteOne({ session });
-
-      // Nếu xóa địa chỉ mặc định, chọn địa chỉ mới gần nhất.
-      if (wasDefault) {
-        const nextAddress = await UserAddress.findOne({
-          userId,
-        })
-          .sort({ createdAt: -1 })
-          .session(session);
-
-        if (nextAddress) {
-          nextAddress.isDefault = true;
-          await nextAddress.save({ session });
-        }
-      }
-    });
-
-    return { message: "Xóa địa chỉ thành công." };
-  } finally {
-    await session.endSession();
-  }
+  return address;
 };

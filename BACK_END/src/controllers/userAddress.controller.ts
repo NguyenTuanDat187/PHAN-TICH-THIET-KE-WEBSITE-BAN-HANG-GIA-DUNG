@@ -1,165 +1,255 @@
+/**
+ * =========================================================
+ * FILE: BACK_END/src/controllers/userAddress.controller.ts
+ * =========================================================
+ *
+ * Nhiệm vụ:
+ * - Tiếp nhận request từ Router.
+ * - Lấy userId từ JWT middleware thông qua req.user.
+ * - Gọi Service xử lý nghiệp vụ.
+ * - Trả kết quả JSON thống nhất.
+ * - Chuyển lỗi sang error-handling middleware.
+ *
+ * Lưu ý:
+ * - Không lấy userId từ body hoặc query của client.
+ * - Người dùng chỉ được thao tác với địa chỉ thuộc tài khoản mình.
+ * - req.user được khai báo mở rộng trong auth.middleware.ts.
+ * =========================================================
+ */
 
-import { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
+
 import {
-  getMyAddressesService,
-  getMyAddressByIdService,
-  createAddressService,
-  updateAddressService,
-  setDefaultAddressService,
-  deleteAddressService,
+  getUserAddressesService,
+  getUserAddressByIdService,
+  createUserAddressService,
+  updateUserAddressService,
+  deleteUserAddressService,
+  setDefaultUserAddressService,
 } from "../services/userAddress.service";
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    userId?: string;
-    id?: string;
-    role?: string;
-  };
-}
+import type {
+  CreateUserAddressInput,
+  UpdateUserAddressInput,
+} from "../services/userAddress.service";
 
-const getUserId = (req: AuthenticatedRequest): string => {
-  const userId = req.user?.userId ?? req.user?.id;
+/**
+ * Lấy ID người dùng đã được authMiddleware xác thực.
+ *
+ * req.user được khai báo trong:
+ * BACK_END/src/middleware/auth.middleware.ts
+ */
+const getAuthenticatedUserId = (req: Request): string => {
+  const userId = req.user?.userId;
 
   if (!userId) {
-    throw new Error("Không xác định được người dùng.");
+    const error = new Error("Không tìm thấy thông tin người dùng.") as
+      Error & { statusCode: number };
+
+    error.statusCode = 401;
+    throw error;
   }
 
   return userId;
 };
+/**
+ * Lấy và kiểm tra ID địa chỉ từ URL.
+ */
 
-const handleError = (res: Response, error: unknown) => {
-  const message =
-    error instanceof Error
-      ? error.message
-      : "Đã xảy ra lỗi.";
+/**
+ * Lấy ID địa chỉ từ URL và kiểm tra kiểu dữ liệu.
+ */
+const readAddressId = (req: Request): string => {
+  const addressId = req.params.id;
 
-  const statusCode =
-    message.includes("Không tìm thấy") ? 404 :
-    message.includes("không hợp lệ") ? 400 : 500;
+  if (typeof addressId !== "string" || addressId.trim() === "") {
+    const error = new Error("ID địa chỉ không hợp lệ.") as
+      Error & { statusCode: number };
 
-  return res.status(statusCode).json({
-    success: false,
-    message,
-  });
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return addressId;
 };
 
-// GET /api/user-addresses
-export const getMyAddresses = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const data = await getMyAddressesService(getUserId(req));
+/**
+ * =========================================================
+ * GET /api/user-addresses
+ * Lấy danh sách địa chỉ của tài khoản đang đăng nhập.
+ * =========================================================
+ */
 
-    return res.status(200).json({
+/**
+ * GET /api/user-addresses
+ * Lấy danh sách địa chỉ của tài khoản đăng nhập.
+ */
+export const getUserAddresses = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = getAuthenticatedUserId(req);
+    const addresses = await getUserAddressesService(userId);
+
+    res.status(200).json({
       success: true,
-      data,
+      message:
+        addresses.length === 0
+          ? "Bạn chưa có địa chỉ giao hàng nào."
+          : "Lấy danh sách địa chỉ thành công.",
+      data: addresses,
     });
   } catch (error) {
-    return handleError(res, error);
+    next(error);
   }
 };
 
-// GET /api/user-addresses/:id
-export const getMyAddressById = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+
+/**
+ * =========================================================
+ * GET /api/user-addresses/:id
+ * Lấy chi tiết một địa chỉ thuộc tài khoản đang đăng nhập.
+ * =========================================================
+ */
+export const getUserAddressById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const data = await getMyAddressByIdService(
-      getUserId(req),
-      req.params.id
+    const userId = getAuthenticatedUserId(req);
+    const addressId = readAddressId(req);
+    const address = await getUserAddressByIdService(
+      userId,
+      addressId
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      data,
+      message: "Lấy thông tin địa chỉ thành công.",
+      data: address,
     });
   } catch (error) {
-    return handleError(res, error);
+    next(error);
   }
 };
 
-// POST /api/user-addresses
-export const createAddress = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+/**
+ * =========================================================
+ * POST /api/user-addresses
+ * Tạo địa chỉ giao hàng mới.
+ * =========================================================
+ */
+export const createUserAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const data = await createAddressService(
-      getUserId(req),
-      req.body
+    const userId = getAuthenticatedUserId(req);
+
+    // Validator tại Router kiểm tra dữ liệu trước khi đến đây.
+    const input = req.body as CreateUserAddressInput;
+
+    const address = await createUserAddressService(
+      userId,
+      input
     );
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: "Thêm địa chỉ thành công.",
-      data,
+      message: "Thêm địa chỉ giao hàng thành công.",
+      data: address,
     });
   } catch (error) {
-    return handleError(res, error);
+    next(error);
   }
 };
 
-// PATCH /api/user-addresses/:id
-export const updateAddress = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+/**
+ * =========================================================
+ * PATCH /api/user-addresses/:id
+ * Cập nhật thông tin địa chỉ.
+ * =========================================================
+ */
+export const updateUserAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const data = await updateAddressService(
-      getUserId(req),
-      req.params.id,
-      req.body
+    const userId = getAuthenticatedUserId(req);
+    const addressId = readAddressId(req);
+    // Chỉ cập nhật các trường được validator cho phép.
+    const input = req.body as UpdateUserAddressInput;
+
+    const address = await updateUserAddressService(
+      userId,
+      addressId,
+      input
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Cập nhật địa chỉ thành công.",
-      data,
+      data: address,
     });
   } catch (error) {
-    return handleError(res, error);
+    next(error);
   }
 };
 
-// PATCH /api/user-addresses/:id/default
-export const setDefaultAddress = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+/**
+ * =========================================================
+ * DELETE /api/user-addresses/:id
+ * Xóa địa chỉ thuộc tài khoản đang đăng nhập.
+ * =========================================================
+ */
+export const deleteUserAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const data = await setDefaultAddressService(
-      getUserId(req),
-      req.params.id
+    const userId = getAuthenticatedUserId(req);
+    const addressId = readAddressId(req); await deleteUserAddressService(userId, addressId);
+
+    res.status(200).json({
+      success: true,
+      message: "Xóa địa chỉ thành công.",
+      data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * =========================================================
+ * PATCH /api/user-addresses/:id/default
+ * Đặt địa chỉ làm địa chỉ mặc định.
+ * =========================================================
+ */
+export const setDefaultUserAddress = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = getAuthenticatedUserId(req);
+    const addressId = readAddressId(req); const address = await setDefaultUserAddressService(
+      userId,
+      addressId
     );
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: "Đặt địa chỉ mặc định thành công.",
-      data,
+      data: address,
     });
   } catch (error) {
-    return handleError(res, error);
-  }
-};
-
-// DELETE /api/user-addresses/:id
-export const deleteAddress = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  try {
-    const data = await deleteAddressService(
-      getUserId(req),
-      req.params.id
-    );
-
-    return res.status(200).json({
-      success: true,
-      ...data,
-    });
-  } catch (error) {
-    return handleError(res, error);
+    next(error);
   }
 };

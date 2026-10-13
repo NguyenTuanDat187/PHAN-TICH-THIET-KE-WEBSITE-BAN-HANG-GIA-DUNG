@@ -1,69 +1,102 @@
+/**
+ * =========================================================
+ * FILE: BACK_END/src/routes/userAddress.routes.ts
+ * =========================================================
+ */
 
 import { Router } from "express";
+
+import authMiddleware from "../middlewares/auth.middleware";
+
 import {
-  getMyAddresses,
-  getMyAddressById,
-  createAddress,
-  updateAddress,
-  setDefaultAddress,
-  deleteAddress,
+  getUserAddresses,
+  getUserAddressById,
+  createUserAddress,
+  updateUserAddress,
+  deleteUserAddress,
+  setDefaultUserAddress,
 } from "../controllers/userAddress.controller";
 
-import { authMiddleware } from "../middlewares/auth.middleware";
-import { validateRequest } from "../middlewares/validateRequest.middleware";
-
 import {
+  validateRequest,
   validateAddressId,
-  validateCreateAddress,
-  validateUpdateAddress,
+  validateCreateUserAddress,
+  validateUpdateUserAddress,
+  validateSetDefaultUserAddress,
 } from "../validators/userAddress.validator";
 
 const router = Router();
 
-// Tất cả endpoint đều yêu cầu đăng nhập.
+/**
+ * Tất cả API địa chỉ đều yêu cầu đăng nhập.
+ */
 router.use(authMiddleware);
 
-// Danh sách địa chỉ của người dùng hiện tại.
-router.get("/", getMyAddresses);
+/**
+ * GET /api/user-addresses
+ * Lấy danh sách địa chỉ.
+ */
+router.get("/", getUserAddresses);
 
-// Thêm địa chỉ.
+/**
+ * POST /api/user-addresses
+ * Tạo địa chỉ mới.
+ */
 router.post(
   "/",
-  validateCreateAddress,
+  validateCreateUserAddress,
   validateRequest,
-  createAddress
+  createUserAddress
 );
 
-// Lấy chi tiết địa chỉ.
+/**
+ * PATCH /api/user-addresses/:id/default
+ * Đặt địa chỉ mặc định.
+ *
+ * Đặt route này trước route /:id để dễ đọc và tránh
+ * nhầm lẫn khi mở rộng router.
+ */
+router.patch(
+  "/:id/default",
+  validateAddressId,
+  validateSetDefaultUserAddress,
+  validateRequest,
+  setDefaultUserAddress
+);
+
+/**
+ * GET /api/user-addresses/:id
+ * Lấy chi tiết địa chỉ.
+ */
 router.get(
   "/:id",
   validateAddressId,
   validateRequest,
-  getMyAddressById
+  getUserAddressById
 );
 
-// Cập nhật địa chỉ.
+/**
+ * PATCH /api/user-addresses/:id
+ * Cập nhật địa chỉ.
+ */
 router.patch(
   "/:id",
-  validateUpdateAddress,
-  validateRequest,
-  updateAddress
-);
-
-// Đặt địa chỉ mặc định.
-router.patch(
-  "/:id/default",
   validateAddressId,
+  validateUpdateUserAddress,
   validateRequest,
-  setDefaultAddress
+  updateUserAddress
 );
 
-// Xóa địa chỉ.
+/**
+ * DELETE /api/user-addresses/:id
+ * Xóa địa chỉ.
+ */
 router.delete(
   "/:id",
   validateAddressId,
   validateRequest,
-  deleteAddress
+  deleteUserAddress
 );
+
 
 export default router;
