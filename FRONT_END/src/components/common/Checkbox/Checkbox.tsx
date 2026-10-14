@@ -2,28 +2,37 @@ import {
   useEffect,
   useId,
   useRef,
+  type CSSProperties,
   type InputHTMLAttributes,
   type ReactNode,
   type Ref,
-} from 'react'
-import { cn } from '../cn.ts'
-import styles from './Checkbox.module.css'
+} from "react";
+import { cn } from "../cn.ts";
+import styles from "./Checkbox.module.css";
 
-export type CheckboxProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
-  ref?: Ref<HTMLInputElement>
-  label?: ReactNode
-  description?: ReactNode
-  error?: string
-  indeterminate?: boolean
-}
+export type CheckboxProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "size"
+> & {
+  ref?: Ref<HTMLInputElement>;
+  label?: ReactNode;
+  description?: ReactNode;
+  error?: string;
+  indeterminate?: boolean;
+  /** Cạnh ô checkbox, tính bằng pixel. */
+  size?: number;
+};
 
-function assignRef(ref: Ref<HTMLInputElement> | undefined, node: HTMLInputElement | null) {
-  if (!ref) return
-  if (typeof ref === 'function') {
-    ref(node)
-    return
+function assignRef(
+  ref: Ref<HTMLInputElement> | undefined,
+  node: HTMLInputElement | null,
+) {
+  if (!ref) return;
+  if (typeof ref === "function") {
+    ref(node);
+    return;
   }
-  ref.current = node
+  ref.current = node;
 }
 
 export function Checkbox({
@@ -37,29 +46,47 @@ export function Checkbox({
   disabled,
   required,
   checked,
+  size,
   ...rest
 }: CheckboxProps) {
-  const generatedId = useId()
-  const inputId = id ?? generatedId
-  const inputRef = useRef<HTMLInputElement>(null)
-  const descriptionId = description ? `${inputId}-description` : undefined
-  const errorId = error ? `${inputId}-error` : undefined
-  const describedBy = [descriptionId, errorId].filter(Boolean).join(' ') || undefined
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const descriptionId = description ? `${inputId}-description` : undefined;
+  const errorId = error ? `${inputId}-error` : undefined;
+  const describedBy =
+    [descriptionId, errorId].filter(Boolean).join(" ") || undefined;
 
   useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.indeterminate = indeterminate && !inputRef.current.checked
+      inputRef.current.indeterminate =
+        indeterminate && !inputRef.current.checked;
     }
-  }, [indeterminate, checked])
+  }, [indeterminate, checked]);
+
+  const fieldStyle =
+    size != null
+      ? ({ "--checkbox-size": `${size}px` } as CSSProperties)
+      : undefined;
 
   return (
-    <div className={cn(styles.field, error && styles.invalid, className)}>
-      <label className={cn(styles.root, disabled && styles.disabled)} htmlFor={inputId}>
+    <div
+      className={cn(styles.field, error && styles.invalid, className)}
+      style={fieldStyle}
+    >
+      <label
+        className={cn(
+          styles.root,
+          disabled && styles.disabled,
+          styles.alignCenter,
+        )}
+        htmlFor={inputId}
+      >
         <input
           {...rest}
           ref={(node) => {
-            inputRef.current = node
-            assignRef(ref, node)
+            inputRef.current = node;
+            assignRef(ref, node);
           }}
           id={inputId}
           type="checkbox"
@@ -78,7 +105,7 @@ export function Checkbox({
                 {label}
                 {required ? (
                   <span className={styles.required} aria-hidden="true">
-                    {' '}
+                    {" "}
                     *
                   </span>
                 ) : null}
@@ -98,5 +125,5 @@ export function Checkbox({
         </p>
       ) : null}
     </div>
-  )
+  );
 }
