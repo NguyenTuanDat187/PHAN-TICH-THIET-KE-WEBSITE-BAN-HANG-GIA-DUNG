@@ -4,6 +4,7 @@ import CouponUsage from "../models/CouponUsage.model";
 import Order, { IOrder, OrderStatus } from "../models/Order.model";
 import OrderItem from "../models/OrderItem.model";
 import ProductVariant from "../models/ProductVariant.model";
+import { recordCodPayment } from "./payment.service";
 
 export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "cancelled"],
@@ -233,6 +234,10 @@ export const updateOrderStatusAdmin = async (
   }
 
   order.status = nextStatus;
+
+  if (nextStatus === "completed" && order.paymentMethod === "COD") {
+    await recordCodPayment(order);
+  }
 
   if (nextStatus === "cancelled") {
     order.cancelledAt = new Date();

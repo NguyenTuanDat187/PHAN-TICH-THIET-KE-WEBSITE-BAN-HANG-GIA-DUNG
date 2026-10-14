@@ -35,6 +35,8 @@ import orderRoutes from "./src/routes/order.routes";
 import orderItemRoutes from "./src/routes/order-item.routes";
 import adminOrderRoutes from "./src/routes/admin/admin.order.routes";
 import adminOrderItemRoutes from "./src/routes/admin/admin.order-item.routes";
+import paymentRoutes from "./src/routes/payment.routes";
+import adminPaymentRoutes from "./src/routes/admin/admin.payment.routes";
 
 /**
  * 4. ERROR MIDDLEWARE
@@ -184,6 +186,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/orders", orderItemRoutes);
 app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/order-items", adminOrderItemRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/admin/payments", adminPaymentRoutes);
 
 /**
  * 19. API NOT FOUND
