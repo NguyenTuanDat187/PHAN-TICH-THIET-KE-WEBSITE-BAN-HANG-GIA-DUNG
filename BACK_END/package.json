@@ -16,7 +16,11 @@
     "test:product-variant": "tsx scripts/test-product-variant.ts",
     "test:product-media": "tsx scripts/test-product-media.ts",
     "test:session3": "tsx scripts/test-session3-integration.ts",
-    "test": "npm run test:category && npm run test:attribute && npm run test:product && npm run test:product-variant && npm run test:product-media && npm run test:session3"
+    "test:cart": "tsx scripts/test-cart.ts",
+    "test:wishlist": "tsx scripts/test-wishlist.ts",
+    "test:coupon": "tsx scripts/test-coupon.ts",
+    "test:session4": "tsx scripts/test-session4-integration.ts",
+    "test": "npm run test:category && npm run test:attribute && npm run test:product && npm run test:product-variant && npm run test:product-media && npm run test:session3 && npm run test:cart && npm run test:wishlist && npm run test:coupon && npm run test:session4"
   },
   "keywords": [],
   "author": "",

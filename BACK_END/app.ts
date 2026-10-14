@@ -25,6 +25,9 @@ import attributeRoutes from "./src/routes/attribute.routes";
 import productRoutes from "./src/routes/product.routes";
 import productVariantRoutes from "./src/routes/product-variant.routes";
 import productMediaRoutes from "./src/routes/product-media.routes";
+import cartRoutes from "./src/routes/cart.routes";
+import wishlistRoutes from "./src/routes/wishlist.routes";
+import couponRoutes from "./src/routes/coupon.routes";
 import userAddressRoutes from "./src/routes/userAddress.routes";
 import adminCustomerRoutes from "./src/routes/admin/admin.customer.routes";
 
@@ -149,6 +152,14 @@ app.use("/api", productVariantRoutes);
  */
 app.use("/api", productMediaRoutes);
 
+// Cart
+app.use("/api/cart", cartRoutes);
+
+// Wishlist
+app.use("/api/wishlist", wishlistRoutes);
+
+// Coupon
+app.use("/api/coupons", couponRoutes);
 
 /**
  * 18. USER ADDRESS ROUTES
