@@ -30,6 +30,11 @@ import wishlistRoutes from "./src/routes/wishlist.routes";
 import couponRoutes from "./src/routes/coupon.routes";
 import userAddressRoutes from "./src/routes/userAddress.routes";
 import adminCustomerRoutes from "./src/routes/admin/admin.customer.routes";
+import checkoutRoutes from "./src/routes/checkout.routes";
+import orderRoutes from "./src/routes/order.routes";
+import orderItemRoutes from "./src/routes/order-item.routes";
+import adminOrderRoutes from "./src/routes/admin/admin.order.routes";
+import adminOrderItemRoutes from "./src/routes/admin/admin.order-item.routes";
 
 /**
  * 4. ERROR MIDDLEWARE
@@ -172,6 +177,13 @@ app.use("/api/user-addresses", userAddressRoutes);
 app.use("/api/admin/statistics", adminStatisticsRoutes);
 // API quản lý khách hàng
 app.use("/api/admin/customers", adminCustomerRoutes);
+
+app.use("/api/checkout", checkoutRoutes);
+
+app.use("/api/orders", orderRoutes);
+app.use("/api/orders", orderItemRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/order-items", adminOrderItemRoutes);
 
 /**
  * 19. API NOT FOUND
