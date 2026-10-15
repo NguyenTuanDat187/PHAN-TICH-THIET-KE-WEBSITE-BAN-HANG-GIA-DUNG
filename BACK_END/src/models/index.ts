@@ -22,3 +22,4 @@ export { default as Payment } from "./Payment.model";
 export { default as Coupon } from "./Coupon.model";
 export { default as CouponUsage } from "./CouponUsage.model";
 export { default as ProductReview } from "./ProductReview.model";
+export { AIConversation } from "./AIConversation.model";
