@@ -31,6 +31,7 @@ import couponRoutes from "./src/routes/coupon.routes";
 import userAddressRoutes from "./src/routes/userAddress.routes";
 import adminCustomerRoutes from "./src/routes/admin/admin.customer.routes";
 import aiProductSearchRoutes from "./src/routes/aiProductSearch.routes";
+import aiChatRoutes from "./src/routes/aiChat.routes";
 
 
 /**
@@ -180,6 +181,8 @@ app.use("/api/user-addresses", userAddressRoutes);
 app.use("/api/admin/statistics", adminStatisticsRoutes);
 // API quản lý khách hàng
 app.use("/api/admin/customers", adminCustomerRoutes);
+// AI Chat tư vấn khách hàng
+app.use("/api/ai", aiChatRoutes);
 
 /**
  * 19. API NOT FOUND
