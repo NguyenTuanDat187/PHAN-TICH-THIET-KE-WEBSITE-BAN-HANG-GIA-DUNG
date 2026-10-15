@@ -20,7 +20,11 @@
     "test:wishlist": "tsx scripts/test-wishlist.ts",
     "test:coupon": "tsx scripts/test-coupon.ts",
     "test:session4": "tsx scripts/test-session4-integration.ts",
-    "test": "npm run test:category && npm run test:attribute && npm run test:product && npm run test:product-variant && npm run test:product-media && npm run test:session3 && npm run test:cart && npm run test:wishlist && npm run test:coupon && npm run test:session4"
+    "test:checkout": "tsx scripts/test-checkout.ts",
+    "test:order": "tsx scripts/test-order.ts",
+    "test:order-item": "tsx scripts/test-order-item.ts",
+    "test:payment": "tsx scripts/test-payment.ts",
+    "test": "npm run test:category && npm run test:attribute && npm run test:product && npm run test:product-variant && npm run test:product-media && npm run test:session3 && npm run test:cart && npm run test:wishlist && npm run test:coupon && npm run test:session4 && npm run test:checkout && npm run test:order && npm run test:order-item"
   },
   "keywords": [],
   "author": "",
