@@ -37,6 +37,8 @@ import adminOrderRoutes from "./src/routes/admin/admin.order.routes";
 import adminOrderItemRoutes from "./src/routes/admin/admin.order-item.routes";
 import paymentRoutes from "./src/routes/payment.routes";
 import adminPaymentRoutes from "./src/routes/admin/admin.payment.routes";
+import aiProductSearchRoutes from "./src/routes/aiProductSearch.routes";
+
 
 /**
  * 4. ERROR MIDDLEWARE
@@ -167,6 +169,12 @@ app.use("/api/wishlist", wishlistRoutes);
 
 // Coupon
 app.use("/api/coupons", couponRoutes);
+// =======================================================
+// API: AI TÌM KIẾM SẢN PHẨM
+// Endpoint: POST /api/ai/products/search
+// =======================================================
+
+app.use("/api/ai/products", aiProductSearchRoutes);
 
 /**
  * 18. USER ADDRESS ROUTES
