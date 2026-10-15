@@ -11,10 +11,14 @@
  * - Trả kết quả tìm kiếm và phân trang.
  */
 
+// import {
+//   openai,
+//   OPENAI_MODEL,
+// } from "../config/openai";
 import {
-  openai,
-  OPENAI_MODEL,
-} from "../config/openai";
+  gemini,
+  GEMINI_MODEL,
+} from "../config/gemini";
 
 import {
   AIProductFilters,
@@ -24,6 +28,46 @@ import {
 import {
   filterProductsFromDatabase,
 } from "./aiProductFilter.service";
+
+/**
+ * FILE: BACK_END/src/services/aiProductSearch.service.ts
+ *
+ * NHIỆM VỤ:
+ * - Thử gọi Gemini lại khi gặp lỗi quá tải tạm thời.
+ * - Không thử lại với những lỗi khác.
+ */
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const retryOnGeminiOverload = async <T>(
+  action: () => Promise<T>,
+  maxRetries = 2,
+): Promise<T> => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await action();
+    } catch (error: unknown) {
+      const status =
+        typeof error === "object" &&
+        error !== null &&
+        "status" in error
+          ? Number(error.status)
+          : 0;
+
+      // Chỉ thử lại với lỗi quá tải hoặc dịch vụ tạm thời không khả dụng.
+      if (
+        ![503, 429].includes(status) ||
+        attempt >= maxRetries
+      ) {
+        throw error;
+      }
+
+      // Chờ 1 giây, sau đó 2 giây trước các lần thử tiếp theo.
+      await sleep(1000 * (attempt + 1));
+    }
+  }
+};
 
 const ALLOWED_SORTS = [
   "relevance",
@@ -158,51 +202,159 @@ const normalizeFilters = (
   };
 };
 
+// const parseSearchQuery = async (
+//   query: string,
+// ): Promise<AIProductFilters> => {
+//   const response = await openai.chat.completions.create({
+//     model: OPENAI_MODEL,
+//     temperature: 0,
+//     response_format: {
+//       type: "json_object",
+//     },
+//     messages: [
+//       {
+//         role: "system",
+//         content: SYSTEM_PROMPT,
+//       },
+//       {
+//         role: "user",
+//         content: JSON.stringify({
+//           query,
+//           requiredOutputSchema: {
+//             keywords: ["string"],
+//             categoryName: "string | null",
+//             brandName: "string | null",
+//             minPrice: "number | null",
+//             maxPrice: "number | null",
+//             minRating: "number | null",
+//             inStock: "boolean",
+//             attributes: [
+//               {
+//                 name: "string",
+//                 value: "string",
+//               },
+//             ],
+//             sort: ALLOWED_SORTS,
+//             reply: "string",
+//           },
+//         }),
+//       },
+//     ],
+//   });
+
+//   const content = response.choices[0]?.message?.content;
+
+//   if (!content) {
+//     throw new Error(
+//       "OpenAI không trả về dữ liệu phân tích tìm kiếm.",
+//     );
+//   }
+
+//   let parsed: unknown;
+
+//   try {
+//     parsed = JSON.parse(content);
+//   } catch {
+//     throw new Error(
+//       "Không thể đọc dữ liệu phân tích từ OpenAI.",
+//     );
+//   }
+
+//   return normalizeFilters(parsed);
+// };
+
+// export const aiProductSearchService = async (
+//   input: AIProductSearchInput,
+// ) => {
+//   const filters = await parseSearchQuery(input.query);
+
+//   const result = await filterProductsFromDatabase(
+//     filters,
+//     input.page,
+//     input.limit,
+//   );
+
+//   const totalPages = Math.ceil(
+//     result.totalProducts / input.limit,
+//   );
+
+//   return {
+//     reply:
+//       result.totalProducts > 0
+//         ? filters.reply
+//         : "Chưa tìm thấy sản phẩm phù hợp với các điều kiện đã nêu.",
+
+//     appliedFilters: filters,
+
+//     products: result.products,
+
+//     pagination: {
+//       page: input.page,
+//       limit: input.limit,
+//       totalProducts: result.totalProducts,
+//       totalPages,
+//       hasMore: input.page < totalPages,
+//     },
+//   };
+// };
+/**
+ * =========================================================
+ * HÀM: parseSearchQuery
+ * =========================================================
+ *
+ * NHIỆM VỤ:
+ * - Gửi câu tìm kiếm tự nhiên đến Gemini.
+ * - Yêu cầu Gemini phân tích thành JSON theo cấu trúc bộ lọc.
+ * - Chuẩn hóa dữ liệu trước khi trả về service chính.
+ */
+
 const parseSearchQuery = async (
   query: string,
 ): Promise<AIProductFilters> => {
-  const response = await openai.chat.completions.create({
-    model: OPENAI_MODEL,
-    temperature: 0,
-    response_format: {
-      type: "json_object",
-    },
-    messages: [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT,
-      },
+const response = await retryOnGeminiOverload(() =>
+  gemini.models.generateContent({    model: GEMINI_MODEL,
+    contents: [
       {
         role: "user",
-        content: JSON.stringify({
-          query,
-          requiredOutputSchema: {
-            keywords: ["string"],
-            categoryName: "string | null",
-            brandName: "string | null",
-            minPrice: "number | null",
-            maxPrice: "number | null",
-            minRating: "number | null",
-            inStock: "boolean",
-            attributes: [
-              {
-                name: "string",
-                value: "string",
+        parts: [
+          {
+            text: JSON.stringify({
+              systemInstruction: SYSTEM_PROMPT,
+              query,
+              requiredOutputSchema: {
+                keywords: ["string"],
+                categoryName: "string | null",
+                brandName: "string | null",
+                minPrice: "number | null",
+                maxPrice: "number | null",
+                minRating: "number | null",
+                inStock: "boolean",
+                attributes: [
+                  {
+                    name: "string",
+                    value: "string",
+                  },
+                ],
+                sort: ALLOWED_SORTS,
+                reply: "string",
               },
-            ],
-            sort: ALLOWED_SORTS,
-            reply: "string",
+            }),
           },
-        }),
+        ],
       },
     ],
-  });
+    config: {
+      responseMimeType: "application/json",
+      systemInstruction: SYSTEM_PROMPT,
+      temperature: 0,
+    },
+  }));
 
-  const content = response.choices[0]?.message?.content;
+  const content = response.text;
 
   if (!content) {
     throw new Error(
-      "OpenAI không trả về dữ liệu phân tích tìm kiếm.",
+      "Gemini không trả về dữ liệu phân tích tìm kiếm.",
     );
   }
 
@@ -212,28 +364,51 @@ const parseSearchQuery = async (
     parsed = JSON.parse(content);
   } catch {
     throw new Error(
-      "Không thể đọc dữ liệu phân tích từ OpenAI.",
+      "Không thể đọc dữ liệu phân tích từ Gemini.",
     );
   }
 
   return normalizeFilters(parsed);
 };
+/**
+ * =========================================================
+ * HÀM: aiProductSearchService
+ * =========================================================
+ *
+ * NHIỆM VỤ:
+ * - Nhận câu tìm kiếm và thông tin phân trang.
+ * - Gọi Gemini phân tích yêu cầu tìm kiếm.
+ * - Truy vấn sản phẩm thực tế trong MongoDB.
+ * - Trả về bộ lọc, danh sách sản phẩm và phân trang.
+ */
 
 export const aiProductSearchService = async (
   input: AIProductSearchInput,
 ) => {
+  /**
+   * BƯỚC 1: Dùng Gemini phân tích câu tìm kiếm.
+   */
   const filters = await parseSearchQuery(input.query);
 
+  /**
+   * BƯỚC 2: Lọc sản phẩm từ MongoDB.
+   */
   const result = await filterProductsFromDatabase(
     filters,
     input.page,
     input.limit,
   );
 
+  /**
+   * BƯỚC 3: Tính thông tin phân trang.
+   */
   const totalPages = Math.ceil(
     result.totalProducts / input.limit,
   );
 
+  /**
+   * BƯỚC 4: Trả kết quả.
+   */
   return {
     reply:
       result.totalProducts > 0
