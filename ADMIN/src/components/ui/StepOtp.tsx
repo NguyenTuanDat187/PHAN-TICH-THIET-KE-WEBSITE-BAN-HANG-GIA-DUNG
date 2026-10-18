@@ -9,7 +9,7 @@ interface StepOtpProps {
 
 export function StepOtp({ email, onNext }: StepOtpProps) {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [countdown] = useState(60);
+  const [] = useState(60);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

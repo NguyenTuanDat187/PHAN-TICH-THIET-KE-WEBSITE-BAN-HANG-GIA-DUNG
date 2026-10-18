@@ -41,7 +41,7 @@ export default function Dropdown({ trigger, children, align = 'right', className
       {open && (
         <div
           className={cn(
-            'absolute top-full mt-2 min-w-[180px] py-1.5 z-50',
+            'absolute top-full mt-2 min-w-45 py-1.5 z-50',
             'bg-bg-elevated border border-border-default rounded-btn shadow-xl',
             'animate-in fade-in zoom-in-95 duration-150',
             align === 'right' ? 'right-0' : 'left-0',
