@@ -65,7 +65,6 @@ const segmentText: Record<CustomerSegment, string> = {
 const panelClass =
   "rounded-xl border border-border-default bg-bg-surface";
 
-const mutedTextClass = "text-text-muted";
 
 const primaryButtonClass =
   "inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent-primary px-4 text-sm font-semibold text-[#111111] transition-colors duration-200 hover:bg-accent-hover active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app";
@@ -155,7 +154,7 @@ function DetailStat({
             {label}
           </p>
 
-          <p className="mt-2 break-words text-xl font-semibold tracking-tight text-text-primary">
+          <p className="mt-2 wrap-break-word text-xl font-semibold tracking-tight text-text-primary">
             {value}
           </p>
         </div>
@@ -198,7 +197,7 @@ function InfoRow({
           {label}
         </p>
 
-        <p className="mt-1 break-words text-sm text-text-primary">
+        <p className="mt-1 wrap-break-word text-sm text-text-primary">
           {value || "Chưa cập nhật"}
         </p>
       </div>
@@ -361,7 +360,7 @@ export default function CustomerDetailPage() {
 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="break-words text-lg font-semibold tracking-tight text-text-primary sm:text-2xl">
+                    <h1 className="wrap-break-word text-lg font-semibold tracking-tight text-text-primary sm:text-2xl">
                       {customer.name}
                     </h1>
 
@@ -407,7 +406,9 @@ export default function CustomerDetailPage() {
                       "Chức năng khóa tài khoản sẽ được tích hợp sau.",
                     )
                   }
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[#F04438]/30 bg-[#F04438]/5 px-3.5 text-sm font-medium text-[#FF8178] transition-colors duration-200 hover:bg-[#F04438]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F04438]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-status-danger/30
+                   bg-status-danger/5 px-3.5 text-sm font-medium text-[#FF8178] transition-colors duration-200
+                    hover:bg-status-danger/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-danger"
                 >
                   <Ban size={15} />
                   Khóa tài khoản

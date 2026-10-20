@@ -132,7 +132,7 @@ function Avatar({
     .toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#484B49] bg-[#2B2D2C] text-[11px] font-semibold text-[#65D928]">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border-strong bg-bg-elevated text-[11px] font-semibold text-[#65D928]">
       {customer.avatar ? (
         <img
           src={customer.avatar}

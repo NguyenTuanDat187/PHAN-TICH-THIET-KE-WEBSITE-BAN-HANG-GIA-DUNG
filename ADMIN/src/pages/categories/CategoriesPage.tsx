@@ -316,7 +316,7 @@ export default function CategoriesPage() {
                 />
               </div>
 
-              <div className="relative min-w-[180px]">
+              <div className="relative min-w-45">
                 <select
                   aria-label="Lọc theo trạng thái"
                   value={statusFilter}
@@ -388,7 +388,7 @@ export default function CategoriesPage() {
               <Button
                 type="button"
                 variant="secondary"
-                className="!h-9 !px-3"
+                className="h-9! px-3!"
                 disabled={safePage <= 1}
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
               >
@@ -411,7 +411,7 @@ export default function CategoriesPage() {
                     <Button
                       type="button"
                       variant={number === safePage ? 'primary' : 'secondary'}
-                      className="!h-9 !w-9 !px-0"
+                      className="h-9! w-9! px-0!"
                       aria-label={`Trang ${number}`}
                       aria-current={number === safePage ? 'page' : undefined}
                       onClick={() => setPage(number)}
@@ -424,7 +424,7 @@ export default function CategoriesPage() {
               <Button
                 type="button"
                 variant="secondary"
-                className="!h-9 !px-3"
+                className="h-9! px-3!"
                 disabled={safePage >= totalPages}
                 onClick={() =>
                   setPage((current) => Math.min(totalPages, current + 1))
