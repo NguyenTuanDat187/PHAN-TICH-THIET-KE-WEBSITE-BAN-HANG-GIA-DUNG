@@ -1,124 +1,114 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Users,
   UserCheck,
   Crown,
-  Search,
-  SlidersHorizontal,
   Download,
   Plus,
   Eye,
-  MoreHorizontal,
   Mail,
   Phone,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ShoppingBag,
   Wallet,
-  X,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { customersMock } from "../../mocks/customers.mock";
+import PageHeader from '../../components/shared/PageHeader';
+import SearchBar from '../../components/shared/SearchBar';
+import FilterBar from '../../components/shared/FilterBar';
+import Pagination from '../../components/shared/Pagination';
+import DataTable, {
+  type DataTableColumn,
+} from '../../components/shared/DataTable';
+import StatCard from '../../components/shared/StatCard';
+import StatusBadge from '../../components/shared/StatusBadge';
+
+import { Button } from '../../components/ui/buttons/Button';
+
+import { customersMock } from '../../mocks/customers.mock';
+
 import type {
   Customer,
   CustomerSegment,
   CustomerStatus,
-} from "../../types/customer.types";
+} from '../../types/customer.types';
 
-/* =========================
+/* =====================================================
    FORMATTERS
-========================= */
+===================================================== */
 
 const money = (value: number) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
+  new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
     maximumFractionDigits: 0,
   }).format(value);
 
 const formatDate = (value: string) => {
-  if (!value) return "Chưa có đơn";
+  if (!value) return 'Chưa có đơn';
 
-  const parsed = new Date(`${value}T00:00:00`);
+  const parsed = new Date(`${value.slice(0, 10)}T00:00:00`);
 
   return Number.isNaN(parsed.getTime())
-    ? "Chưa có đơn"
-    : parsed.toLocaleDateString("vi-VN");
+    ? 'Chưa có đơn'
+    : parsed.toLocaleDateString('vi-VN');
 };
 
 const statusLabels: Record<CustomerStatus, string> = {
-  active: "Hoạt động",
-  inactive: "Không hoạt động",
-  blocked: "Đã khóa",
+  active: 'Hoạt động',
+  inactive: 'Không hoạt động',
+  blocked: 'Đã khóa',
+};
+
+const statusVariants: Record<
+  CustomerStatus,
+  'success' | 'neutral' | 'danger'
+> = {
+  active: 'success',
+  inactive: 'neutral',
+  blocked: 'danger',
 };
 
 const segmentLabels: Record<CustomerSegment, string> = {
-  new: "Mới",
-  regular: "Thân thiết",
-  vip: "VIP",
+  new: 'Mới',
+  regular: 'Thân thiết',
+  vip: 'VIP',
 };
 
-/* =========================
-   STATUS BADGE
-========================= */
-
-function StatusPill({
-  status,
-}: {
-  status: CustomerStatus;
-}) {
-  const styles: Record<CustomerStatus, string> = {
-    active:
-      "border-[#65D928]/20 bg-[#65D928]/10 text-[#8BE85A]",
-    inactive:
-      "border-[#858987]/20 bg-[#858987]/10 text-[#B5B7B6]",
-    blocked:
-      "border-[#F04438]/20 bg-[#F04438]/10 text-[#FF8178]",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium ${styles[status]}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {statusLabels[status]}
-    </span>
-  );
-}
-
-/* =========================
+/* =====================================================
    CUSTOMER SEGMENT BADGE
-========================= */
+===================================================== */
 
-function SegmentPill({
+function SegmentBadge({
   segment,
 }: {
   segment: CustomerSegment;
 }) {
   const styles: Record<CustomerSegment, string> = {
-    new: "border-[#1084A9]/25 bg-[#1084A9]/10 text-[#55B9D8]",
-    regular:
-      "border-[#A78BFA]/25 bg-[#A78BFA]/10 text-[#C4B5FD]",
-    vip: "border-[#65D928]/25 bg-[#65D928]/10 text-[#8BE85A]",
+    new: 'border-[#1084A9]/25 bg-[#1084A9]/10 text-[#55B9D8]',
+    regular: 'border-[#A78BFA]/25 bg-[#A78BFA]/10 text-[#C4B5FD]',
+    vip: 'border-[#65D928]/25 bg-[#65D928]/10 text-[#8BE85A]',
   };
 
   return (
     <span
       className={`inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium ${styles[segment]}`}
     >
-      {segment === "vip" && <Crown size={12} />}
+      {segment === 'vip' && (
+        <Crown size={12} aria-hidden="true" />
+      )}
+
       {segmentLabels[segment]}
     </span>
   );
 }
 
-/* =========================
+/* =====================================================
    CUSTOMER AVATAR
-========================= */
+===================================================== */
 
-function Avatar({
+function CustomerAvatar({
   customer,
 }: {
   customer: Customer;
@@ -127,16 +117,16 @@ function Avatar({
     .trim()
     .split(/\s+/)
     .slice(-2)
-    .map((word) => word[0])
-    .join("")
+    .map((word) => word[0] ?? '')
+    .join('')
     .toUpperCase();
 
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border-strong bg-bg-elevated text-[11px] font-semibold text-[#65D928]">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border-strong bg-bg-elevated text-[11px] font-semibold text-accent-primary">
       {customer.avatar ? (
         <img
           src={customer.avatar}
-          alt={customer.name}
+          alt={`Ảnh đại diện của ${customer.name}`}
           className="h-full w-full object-cover"
         />
       ) : (
@@ -146,240 +136,359 @@ function Avatar({
   );
 }
 
-/* =========================
-   STATISTIC CARD
-========================= */
+/* =====================================================
+   CUSTOMER STATUS
+   Reuse shared StatusBadge
+===================================================== */
 
-function StatCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  accent,
+function CustomerStatusBadge({
+  status,
 }: {
-  title: string;
-  value: string;
-  description: string;
-  icon: typeof Users;
-  accent: string;
+  status: CustomerStatus;
 }) {
   return (
-    <section className="min-w-0 rounded-xl border border-border-default bg-bg-surface p-3 transition-colors duration-200 hover:bg-bg-elevated sm:p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-xs font-medium text-text-secondary">
-            {title}
-          </p>
-
-          <p className="mt-2 truncate text-xl font-semibold tracking-tight text-text-primary sm:text-2xl">
-            {value}
-          </p>
-        </div>
-
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-default bg-bg-elevated ${accent}`}
-        >
-          <Icon size={18} strokeWidth={1.8} />
-        </div>
-      </div>
-
-      <p className="mt-2 truncate text-[11px] text-text-muted">
-        {description}
-      </p>
-    </section>
+    <StatusBadge
+      status={statusLabels[status]}
+      variant={statusVariants[status]}
+      className="whitespace-nowrap"
+    />
   );
 }
 
-/* =========================
-   INPUT STYLE
-========================= */
-
-const controlClass =
-  "h-10 rounded-lg border border-border-strong bg-bg-app px-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15";
-
-/* =========================
+/* =====================================================
    CUSTOMERS PAGE
-========================= */
+===================================================== */
 
 export default function CustomersPage() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
-  const [segment, setSegment] = useState("all");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<CustomerStatus | 'all'>('all');
+  const [segment, setSegment] = useState<CustomerSegment | 'all'>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [showFilters, setShowFilters] = useState(false);
 
   const customers = customersMock;
 
-  /* Statistics */
+  /* =====================================================
+     STATISTICS
+  ===================================================== */
 
-  const stats = useMemo(() => {
-    return {
+  const stats = useMemo(
+    () => ({
       total: customers.length,
 
       active: customers.filter(
-        (customer) => customer.status === "active",
+        (customer) => customer.status === 'active',
       ).length,
 
       vip: customers.filter(
-        (customer) => customer.segment === "vip",
+        (customer) => customer.segment === 'vip',
       ).length,
 
       spent: customers.reduce(
         (sum, customer) => sum + customer.totalSpent,
         0,
       ),
-    };
-  }, [customers]);
+    }),
+    [customers],
+  );
 
-  /* Search and filters */
+  /* =====================================================
+     SEARCH AND FILTERS
+  ===================================================== */
 
-  const filtered = useMemo(() => {
-    const keyword = search
-      .trim()
-      .toLocaleLowerCase("vi-VN");
+  const filteredCustomers = useMemo(() => {
+    const keyword = search.trim().toLocaleLowerCase('vi-VN');
 
     return customers.filter((customer) => {
+      const searchableValues = [
+        customer.name,
+        customer.code,
+        customer.email,
+        customer.phone,
+      ];
+
       const matchesSearch =
         !keyword ||
-        [
-          customer.name,
-          customer.code,
-          customer.email,
-          customer.phone,
-        ].some((value) =>
-          value.toLocaleLowerCase("vi-VN").includes(keyword),
+        searchableValues.some((value) =>
+          value.toLocaleLowerCase('vi-VN').includes(keyword),
         );
 
       const matchesStatus =
-        status === "all" || customer.status === status;
+        status === 'all' || customer.status === status;
 
       const matchesSegment =
-        segment === "all" || customer.segment === segment;
+        segment === 'all' || customer.segment === segment;
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesSegment
-      );
+      return matchesSearch && matchesStatus && matchesSegment;
     });
   }, [customers, search, status, segment]);
 
-  /* Pagination */
+  /* =====================================================
+     PAGINATION
+  ===================================================== */
 
   const pageCount = Math.max(
     1,
-    Math.ceil(filtered.length / pageSize),
+    Math.ceil(filteredCustomers.length / pageSize),
   );
 
-  const safePage = Math.min(page, pageCount);
+  const safePage = Math.min(Math.max(1, page), pageCount);
 
-  const visibleCustomers = filtered.slice(
-    (safePage - 1) * pageSize,
-    safePage * pageSize,
+  const visibleCustomers = useMemo(
+    () =>
+      filteredCustomers.slice(
+        (safePage - 1) * pageSize,
+        safePage * pageSize,
+      ),
+    [filteredCustomers, safePage, pageSize],
   );
 
-  /* Reset filters */
+  /* =====================================================
+     RESET FILTERS
+  ===================================================== */
 
   const resetFilters = () => {
-    setSearch("");
-    setStatus("all");
-    setSegment("all");
+    setSearch('');
+    setStatus('all');
+    setSegment('all');
     setPage(1);
   };
+
+  const hasActiveFilters =
+    Boolean(search.trim()) || status !== 'all' || segment !== 'all';
+
+  /* =====================================================
+     TABLE COLUMNS
+     Reuse shared DataTable
+  ===================================================== */
+
+  const columns: DataTableColumn<Customer>[] = [
+    {
+      key: 'customer',
+      header: 'Khách hàng',
+      className: 'min-w-[190px]',
+      headerClassName: 'min-w-[190px]',
+      render: (customer) => (
+        <div className="flex min-w-0 items-center gap-2.5">
+          <CustomerAvatar customer={customer} />
+
+          <div className="min-w-0">
+            <Link
+              to={`/customers/${customer.id}`}
+              title={customer.name}
+              className="block max-w-50 truncate text-xs font-semibold text-text-primary transition-colors hover:text-accent-primary"
+            >
+              {customer.name}
+            </Link>
+
+            <p className="mt-0.5 text-[10px] text-text-muted">
+              {customer.code}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'contact',
+      header: 'Thông tin liên hệ',
+      className: 'min-w-[200px]',
+      headerClassName: 'min-w-[200px]',
+      render: (customer) => (
+        <div className="min-w-0 space-y-1.5">
+          <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-text-secondary">
+            <Mail
+              size={12}
+              className="shrink-0 text-text-muted"
+              aria-hidden="true"
+            />
+
+            <span className="truncate" title={customer.email}>
+              {customer.email || 'Chưa cập nhật'}
+            </span>
+          </p>
+
+          <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-text-muted">
+            <Phone
+              size={12}
+              className="shrink-0"
+              aria-hidden="true"
+            />
+
+            <span className="truncate">
+              {customer.phone || 'Chưa cập nhật'}
+            </span>
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'segment',
+      header: 'Phân nhóm',
+      className: 'min-w-[130px]',
+      headerClassName: 'min-w-[130px]',
+      render: (customer) => (
+        <SegmentBadge segment={customer.segment} />
+      ),
+    },
+    {
+      key: 'orders',
+      header: 'Đơn hàng',
+      className: 'min-w-[95px] text-center',
+      headerClassName: 'min-w-[95px] text-center',
+      render: (customer) => (
+        <span className="inline-flex items-center justify-center gap-1.5 text-xs font-medium text-text-primary">
+          <ShoppingBag
+            size={13}
+            className="text-text-muted"
+            aria-hidden="true"
+          />
+
+          {customer.totalOrders.toLocaleString('vi-VN')}
+        </span>
+      ),
+    },
+    {
+      key: 'spent',
+      header: 'Tổng chi tiêu',
+      className: 'min-w-[140px]',
+      headerClassName: 'min-w-[140px]',
+      render: (customer) => (
+        <span className="whitespace-nowrap text-xs font-semibold text-text-primary">
+          {money(customer.totalSpent)}
+        </span>
+      ),
+    },
+    {
+      key: 'lastOrder',
+      header: 'Mua gần nhất',
+      className: 'min-w-[120px]',
+      headerClassName: 'min-w-[120px]',
+      render: (customer) => (
+        <span className="whitespace-nowrap text-[11px] text-text-secondary">
+          {formatDate(customer.lastOrderDate)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Trạng thái',
+      className: 'min-w-[130px]',
+      headerClassName: 'min-w-[130px]',
+      render: (customer) => (
+        <CustomerStatusBadge status={customer.status} />
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Chi tiết',
+      className: 'min-w-[80px] text-right',
+      headerClassName: 'min-w-[80px] text-right',
+      render: (customer) => (
+        <div className="flex justify-end">
+          <Link
+            to={`/customers/${customer.id}`}
+            title="Xem chi tiết"
+            aria-label={`Xem chi tiết ${customer.name}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-secondary transition-colors hover:border-accent-primary/40 hover:bg-accent-primary/10 hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+          >
+            <Eye size={15} aria-hidden="true" />
+          </Link>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-full bg-bg-app p-4 text-text-primary sm:p-5 xl:p-6">
       <div className="mx-auto flex max-w-[1800px] flex-col gap-4">
-
         {/* PAGE HEADER */}
 
-        <header className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
-          <div className="min-w-0">
-            <div className="mb-1 flex items-center gap-2 text-[11px] font-medium text-text-muted">
-              <span>Quản lý</span>
-              <span>/</span>
-              <span className="text-text-secondary">
-                Khách hàng
-              </span>
-            </div>
+        <PageHeader
+          eyebrow="Quản lý / Khách hàng"
+          title="Khách hàng"
+          description="Theo dõi hồ sơ, phân nhóm và lịch sử mua hàng."
+          actions={
+            <>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => window.print()}
+              >
+                <Download size={16} aria-hidden="true" />
+                <span className="hidden sm:inline">Xuất / In</span>
+              </Button>
 
-            <h1 className="text-xl font-semibold tracking-tight text-text-primary sm:text-2xl">
-              Khách hàng
-            </h1>
-
-            <p className="mt-1 text-xs text-text-secondary">
-              Theo dõi hồ sơ, phân nhóm và lịch sử mua hàng.
-            </p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border-strong bg-bg-surface px-3 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-            >
-              <Download size={16} />
-              <span className="hidden sm:inline">
-                Xuất / In
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                alert(
-                  "Giao diện thêm khách hàng sẽ được tích hợp sau.",
-                )
-              }
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent-primary px-3.5 text-sm font-semibold text-[#111111] transition-colors duration-200 hover:bg-accent-hover active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app"
-            >
-              <Plus size={17} />
-              Thêm khách hàng
-            </button>
-          </div>
-        </header>
+              <Button
+                type="button"
+                disabled
+                title="Chức năng thêm khách hàng chưa được triển khai"
+              >
+                <Plus size={17} aria-hidden="true" />
+                Thêm khách hàng
+              </Button>
+            </>
+          }
+        />
 
         {/* STATISTICS */}
 
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-          <StatCard
-            title="Tổng khách hàng"
-            value={stats.total.toLocaleString("vi-VN")}
-            description="Tất cả hồ sơ khách hàng"
-            icon={Users}
-            accent="text-[#65D928]"
-          />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="min-w-0">
+            <StatCard
+              label="Tổng khách hàng"
+              value={stats.total.toLocaleString('vi-VN')}
+              icon={Users}
+              accent="primary"
+            />
 
-          <StatCard
-            title="Đang hoạt động"
-            value={stats.active.toLocaleString("vi-VN")}
-            description="Tài khoản đang hoạt động"
-            icon={UserCheck}
-            accent="text-[#65D928]"
-          />
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Tất cả hồ sơ khách hàng
+            </p>
+          </div>
 
-          <StatCard
-            title="Khách hàng VIP"
-            value={stats.vip.toLocaleString("vi-VN")}
-            description="Nhóm khách hàng giá trị cao"
-            icon={Crown}
-            accent="text-[#8BE85A]"
-          />
+          <div className="min-w-0">
+            <StatCard
+              label="Đang hoạt động"
+              value={stats.active.toLocaleString('vi-VN')}
+              icon={UserCheck}
+              accent="primary"
+            />
 
-          <StatCard
-            title="Tổng chi tiêu"
-            value={money(stats.spent)}
-            description="Tổng giá trị mua hàng mẫu"
-            icon={Wallet}
-            accent="text-[#55B9D8]"
-          />
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Tài khoản đang hoạt động
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <StatCard
+              label="Khách hàng VIP"
+              value={stats.vip.toLocaleString('vi-VN')}
+              icon={Crown}
+              accent="primary"
+            />
+
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Nhóm khách hàng giá trị cao
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <StatCard
+              label="Tổng chi tiêu"
+              value={money(stats.spent)}
+              icon={Wallet}
+              accent="cyan"
+            />
+
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Tổng giá trị mua hàng mẫu
+            </p>
+          </div>
         </div>
 
-        {/* CUSTOMER TABLE */}
+        {/* CUSTOMER LIST */}
 
-        <section className="overflow-hidden rounded-xl border border-border-default bg-bg-surface">
-
+        <section className="min-w-0 overflow-hidden rounded-xl border border-border-default bg-bg-surface">
           {/* TABLE HEADER */}
 
           <div className="flex flex-col gap-3 border-b border-border-default p-3 sm:p-4 xl:flex-row xl:items-center xl:justify-between">
@@ -389,137 +498,84 @@ export default function CustomersPage() {
               </h2>
 
               <p className="mt-1 text-xs text-text-muted">
-                {filtered.length.toLocaleString("vi-VN")} kết quả
-                {" · "}
+                {filteredCustomers.length.toLocaleString('vi-VN')} kết quả
+                {' · '}
                 Dữ liệu mẫu
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              {/* SEARCH */}
-
-              <div className="relative min-w-0 sm:w-64 xl:w-72">
-                <Search
-                  size={16}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                />
-
-                <input
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                    setPage(1);
-                  }}
-                  placeholder="Tìm tên, mã, email, số điện thoại..."
-                  aria-label="Tìm kiếm khách hàng"
-                  className={`${controlClass} w-full pl-9 pr-9`}
-                />
-
-                {search && (
-                  <button
-                    type="button"
-                    aria-label="Xóa nội dung tìm kiếm"
-                    onClick={() => {
-                      setSearch("");
+            <div className="min-w-0 xl:w-155">
+              <FilterBar
+                onReset={resetFilters}
+                showReset={hasActiveFilters}
+                resetLabel="Xóa bộ lọc"
+                className="rounded-lg p-2"
+              >
+                <div className="w-full min-w-0 sm:flex-1">
+                  <SearchBar
+                    value={search}
+                    onChange={(value) => {
+                      setSearch(value);
                       setPage(1);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-text-primary"
+                    placeholder="Tìm tên, mã, email, số điện thoại..."
+                    className="w-full"
+                    ariaLabel="Tìm kiếm khách hàng"
+                  />
+                </div>
+
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-[145px]">
+                  <span>Trạng thái</span>
+
+                  <select
+                    value={status}
+                    onChange={(event) => {
+                      setStatus(
+                        event.target.value as CustomerStatus | 'all',
+                      );
+                      setPage(1);
+                    }}
+                    className="h-10 w-full rounded-lg border border-border-strong bg-bg-app px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15"
                   >
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
+                    <option value="all">Tất cả trạng thái</option>
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Không hoạt động</option>
+                    <option value="blocked">Đã khóa</option>
+                  </select>
+                </label>
 
-              {/* FILTER BUTTON */}
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-[145px]">
+                  <span>Phân nhóm</span>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setShowFilters((current) => !current)
-                }
-                aria-expanded={showFilters}
-                className={`inline-flex h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary ${
-                  showFilters
-                    ? "border-accent-primary/50 bg-accent-primary/10 text-[#8BE85A]"
-                    : "border-border-strong bg-bg-surface text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-                }`}
-              >
-                <SlidersHorizontal size={16} />
-                Bộ lọc
-
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${
-                    showFilters ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+                  <select
+                    value={segment}
+                    onChange={(event) => {
+                      setSegment(
+                        event.target.value as CustomerSegment | 'all',
+                      );
+                      setPage(1);
+                    }}
+                    className="h-10 w-full rounded-lg border border-border-strong bg-bg-app px-3 text-sm text-text-primary outline-none transition-colors focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15"
+                  >
+                    <option value="all">Tất cả nhóm</option>
+                    <option value="new">Khách hàng mới</option> 
+                    <option value="regular">Thân thiết</option>
+                    <option value="vip">VIP</option>
+                  </select>
+                </label>
+              </FilterBar>
             </div>
           </div>
 
-          {/* FILTER PANEL */}
+          {/* RESULT SUMMARY */}
 
-          {showFilters && (
-            <div className="grid grid-cols-1 gap-3 border-b border-border-default bg-bg-app p-3 sm:grid-cols-3 sm:p-4">
-              <label className="space-y-1.5 text-xs font-medium text-text-secondary">
-                Trạng thái
-
-                <select
-                  value={status}
-                  onChange={(event) => {
-                    setStatus(event.target.value);
-                    setPage(1);
-                  }}
-                  className={`${controlClass} w-full`}
-                >
-                  <option value="all">Tất cả trạng thái</option>
-                  <option value="active">Hoạt động</option>
-                  <option value="inactive">
-                    Không hoạt động
-                  </option>
-                  <option value="blocked">Đã khóa</option>
-                </select>
-              </label>
-
-              <label className="space-y-1.5 text-xs font-medium text-text-secondary">
-                Phân nhóm khách hàng
-
-                <select
-                  value={segment}
-                  onChange={(event) => {
-                    setSegment(event.target.value);
-                    setPage(1);
-                  }}
-                  className={`${controlClass} w-full`}
-                >
-                  <option value="all">Tất cả nhóm</option>
-                  <option value="new">Khách hàng mới</option>
-                  <option value="regular">Thân thiết</option>
-                  <option value="vip">VIP</option>
-                </select>
-              </label>
-
-              <div className="flex items-end">
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="h-10 w-full rounded-lg border border-border-strong bg-bg-surface px-3 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-hover hover:text-text-primary"
-                >
-                  Xóa bộ lọc
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* RESULT COUNT */}
-
-          <div className="flex items-center justify-between gap-2 px-3 py-2.5 text-[11px] text-text-muted sm:px-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-[11px] text-text-muted sm:px-4">
             <span>
-              Hiển thị{" "}
+              Hiển thị{' '}
               <strong className="font-semibold text-text-primary">
                 {visibleCustomers.length}
-              </strong>{" "}
-              / {filtered.length} khách hàng
+              </strong>{' '}
+              / {filteredCustomers.length} khách hàng
             </span>
 
             <span className="inline-flex items-center gap-1.5">
@@ -528,279 +584,35 @@ export default function CustomersPage() {
             </span>
           </div>
 
-          {/* RESPONSIVE TABLE */}
+          {/* SHARED DATA TABLE */}
 
-          <div className="w-full">
-            <table className="w-full table-fixed border-collapse text-left">
-              <colgroup>
-                <col className="w-[23%]" />
-                <col className="w-[22%]" />
-                <col className="w-[12%]" />
-                <col className="w-[8%]" />
-                <col className="w-[13%]" />
-                <col className="w-[10%]" />
-                <col className="w-[12%]" />
-              </colgroup>
-
-              <thead>
-                <tr className="border-y border-border-default bg-bg-elevated/60 text-[10px] uppercase tracking-wide text-text-muted">
-                  <th className="px-3 py-3 font-semibold">
-                    Khách hàng
-                  </th>
-
-                  <th className="px-2 py-3 font-semibold">
-                    Liên hệ
-                  </th>
-
-                  <th className="px-2 py-3 font-semibold">
-                    Phân nhóm
-                  </th>
-
-                  <th className="px-2 py-3 text-center font-semibold">
-                    Đơn
-                  </th>
-
-                  <th className="px-2 py-3 font-semibold">
-                    Chi tiêu
-                  </th>
-
-                  <th className="px-2 py-3 font-semibold">
-                    Mua gần nhất
-                  </th>
-
-                  <th className="px-3 py-3 text-right font-semibold">
-                    Trạng thái / Xem
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-border-default">
-                {visibleCustomers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="group transition-colors duration-150 hover:bg-bg-hover/70"
-                  >
-                    {/* CUSTOMER */}
-
-                    <td className="px-3 py-2.5">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <Avatar customer={customer} />
-
-                        <div className="min-w-0">
-                          <Link
-                            to={`/customers/${customer.id}`}
-                            className="block truncate text-xs font-semibold text-text-primary transition-colors hover:text-accent-primary"
-                            title={customer.name}
-                          >
-                            {customer.name}
-                          </Link>
-
-                          <p className="mt-0.5 truncate text-[10px] text-text-muted">
-                            {customer.code}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* CONTACT */}
-
-                    <td className="px-2 py-2.5">
-                      <div className="min-w-0 space-y-1">
-                        <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-text-secondary">
-                          <Mail
-                            size={12}
-                            className="shrink-0 text-text-muted"
-                          />
-
-                          <span
-                            className="truncate"
-                            title={customer.email}
-                          >
-                            {customer.email}
-                          </span>
-                        </p>
-
-                        <p className="flex min-w-0 items-center gap-1.5 text-[11px] text-text-muted">
-                          <Phone
-                            size={12}
-                            className="shrink-0"
-                          />
-
-                          <span className="truncate">
-                            {customer.phone}
-                          </span>
-                        </p>
-                      </div>
-                    </td>
-
-                    {/* SEGMENT */}
-
-                    <td className="px-2 py-2.5">
-                      <SegmentPill
-                        segment={customer.segment}
-                      />
-                    </td>
-
-                    {/* ORDERS */}
-
-                    <td className="px-2 py-2.5 text-center">
-                      <span className="inline-flex items-center justify-center gap-1 text-xs font-medium text-text-primary">
-                        <ShoppingBag
-                          size={13}
-                          className="text-text-muted"
-                        />
-
-                        {customer.totalOrders}
-                      </span>
-                    </td>
-
-                    {/* SPENDING */}
-
-                    <td className="px-2 py-2.5">
-                      <span
-                        className="block truncate text-xs font-semibold text-text-primary"
-                        title={money(customer.totalSpent)}
-                      >
-                        {money(customer.totalSpent)}
-                      </span>
-                    </td>
-
-                    {/* LAST ORDER */}
-
-                    <td className="px-2 py-2.5 text-[11px] text-text-secondary">
-                      <span
-                        className="block truncate"
-                        title={formatDate(customer.lastOrderDate)}
-                      >
-                        {formatDate(customer.lastOrderDate)}
-                      </span>
-                    </td>
-
-                    {/* STATUS AND ACTIONS */}
-
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <StatusPill
-                          status={customer.status}
-                        />
-
-                        <Link
-                          to={`/customers/${customer.id}`}
-                          title="Xem chi tiết"
-                          aria-label={`Xem chi tiết ${customer.name}`}
-                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-default text-text-secondary transition-colors hover:border-accent-primary/40 hover:bg-accent-primary/10 hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
-                        >
-                          <Eye size={15} />
-                        </Link>
-
-                        <button
-                          type="button"
-                          title="Thao tác khác"
-                          aria-label={`Thao tác khác với ${customer.name}`}
-                          onClick={() =>
-                            alert(
-                              `Menu thao tác cho ${customer.name} sẽ được bổ sung sau.`,
-                            )
-                          }
-                          className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary 2xl:inline-flex"
-                        >
-                          <MoreHorizontal size={17} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {/* EMPTY STATE */}
-
-                {visibleCustomers.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-12 text-center"
-                    >
-                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-text-muted">
-                        <Users size={20} />
-                      </div>
-
-                      <p className="mt-3 text-sm font-semibold text-text-primary">
-                        Không tìm thấy khách hàng
-                      </p>
-
-                      <p className="mt-1 text-xs text-text-muted">
-                        Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={resetFilters}
-                        className="mt-3 text-xs font-semibold text-accent-primary hover:text-accent-hover"
-                      >
-                        Đặt lại bộ lọc
-                      </button>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="min-w-0 overflow-x-auto px-3 pb-3 sm:px-4">
+            <div className="min-w-[1050px]">
+              <DataTable
+                columns={columns}
+                data={visibleCustomers}
+                getRowId={(customer) => customer.id}
+                emptyTitle="Không tìm thấy khách hàng"
+                emptyDescription="Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc."
+              />
+            </div>
           </div>
 
-          {/* PAGINATION */}
+          {/* SHARED PAGINATION */}
 
-          <footer className="flex flex-col gap-3 border-t border-border-default px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
-            <div className="flex items-center gap-2 text-xs text-text-secondary">
-              <span>Số dòng</span>
-
-              <select
-                value={pageSize}
-                onChange={(event) => {
-                  setPageSize(Number(event.target.value));
-                  setPage(1);
-                }}
-                className="h-8 rounded-md border border-border-strong bg-bg-app px-2 text-xs text-text-primary outline-none focus:border-accent-primary"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 sm:justify-end">
-              <span className="text-xs text-text-muted">
-                Trang {safePage} / {pageCount}
-              </span>
-
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  disabled={safePage <= 1}
-                  onClick={() =>
-                    setPage((current) =>
-                      Math.max(1, current - 1),
-                    )
-                  }
-                  aria-label="Trang trước"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-strong text-text-secondary transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <button
-                  type="button"
-                  disabled={safePage >= pageCount}
-                  onClick={() =>
-                    setPage((current) =>
-                      Math.min(pageCount, current + 1),
-                    )
-                  }
-                  aria-label="Trang sau"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-strong text-text-secondary transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          </footer>
+          <div className="px-3 pb-4 sm:px-4">
+            <Pagination
+              page={safePage}
+              pageSize={pageSize}
+              total={filteredCustomers.length}
+              onPageChange={setPage}
+              onPageSizeChange={(nextPageSize) => {
+                setPageSize(nextPageSize);
+                setPage(1);
+              }}
+              pageSizeOptions={[5, 10, 20, 50]}
+            />
+          </div>
         </section>
       </div>
     </div>
