@@ -55,7 +55,7 @@ export default function Sheet({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-100">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
         onClick={onClose}

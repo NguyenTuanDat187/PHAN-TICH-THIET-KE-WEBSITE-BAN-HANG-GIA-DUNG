@@ -1,7 +1,7 @@
 import { Search, Bell, Plus, LogOut,LogIn, User as UserIcon } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/buttons/Button';
 import { cn } from '../utils/cn';
 
 interface HeaderProps {

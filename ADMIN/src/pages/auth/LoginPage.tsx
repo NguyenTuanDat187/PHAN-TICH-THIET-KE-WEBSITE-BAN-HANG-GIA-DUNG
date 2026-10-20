@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
-import { Input } from '../../components/ui/Input';
-import { Checkbox } from '../../components/ui/Checkbox';
-import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/forms/Input';
+import { Checkbox } from '../../components/ui/forms/Checkbox';
+import { Button } from '../../components/ui/buttons/Button';
 
 export default function LoginPage() {
   const navigate = useNavigate();
