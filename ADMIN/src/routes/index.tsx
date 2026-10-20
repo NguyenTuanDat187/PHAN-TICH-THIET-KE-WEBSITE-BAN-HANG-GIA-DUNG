@@ -22,6 +22,11 @@ import CustomerDetailPage from '../pages/customers/CustomerDetailPage';
 // Category pages
 import CategoriesPage from '../pages/categories/CategoriesPage';
 
+// Product pages
+import ProductsPage from '../pages/products/ProductsPage';
+import ProductDetailPage from '../pages/products/ProductDetailPage';
+import ProductFormPage from '../pages/products/ProductFormPage';
+
 export const router = createBrowserRouter([
   // ==========================================
   // AUTH ROUTES - Public
@@ -77,7 +82,23 @@ export const router = createBrowserRouter([
             path: 'categories',
             element: <CategoriesPage />,
           },
-
+          // Products
+          {
+            path: 'products',
+            element: <ProductsPage />,
+          },
+          {
+            path: 'products/new',
+            element: <ProductFormPage />,
+          },
+          {
+            path: 'products/:id/edit',
+            element: <ProductFormPage />,
+          },
+          {
+            path: 'products/:id',
+            element: <ProductDetailPage />,
+          },
           // TODO: Thêm route khi các trang được tạo:
           // products
           // orders
