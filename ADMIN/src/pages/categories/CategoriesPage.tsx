@@ -2,28 +2,32 @@
 import { useMemo, useState } from 'react';
 import {
   CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   FolderTree,
   Layers3,
   Package,
   Plus,
-  Search,
   Tags,
-  X,
 } from 'lucide-react';
+
 import { Button } from '../../components/ui/buttons/Button';
 import {
   Card,
   CardBody,
 } from '../../components/ui/data-display/Card';
-import { Input } from '../../components/ui/forms/Input';
+
+import PageHeader from '../../components/shared/PageHeader';
+import SearchBar from '../../components/shared/SearchBar';
+import FilterBar from '../../components/shared/FilterBar';
+import Pagination from '../../components/shared/Pagination';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
+
 import { mockCategories } from '../../mocks/categories.mock';
+
 import type {
   Category,
   CategoryFormValues,
 } from '../../types/category.types';
+
 import CategoryFormModal from './components/CategoryFormModal';
 import CategoryTable from './components/CategoryTable';
 
@@ -35,12 +39,20 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>(() =>
     mockCategories.map((item) => ({ ...item })),
   );
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [page, setPage] = useState(1);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(
+    null,
+  );
+
+  const [pendingDelete, setPendingDelete] = useState<Category | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Thống kê danh mục
   const stats = useMemo(() => {
     const active = categories.filter(
       (item) => item.status === 'active',
@@ -64,6 +76,7 @@ export default function CategoriesPage() {
     };
   }, [categories]);
 
+  // Tìm kiếm và lọc
   const filteredCategories = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase('vi');
 
@@ -81,6 +94,7 @@ export default function CategoriesPage() {
     });
   }, [categories, search, statusFilter]);
 
+  // Phân trang
   const totalPages = Math.max(
     1,
     Math.ceil(filteredCategories.length / PAGE_SIZE),
@@ -93,16 +107,19 @@ export default function CategoriesPage() {
     safePage * PAGE_SIZE,
   );
 
+  // Mở form tạo danh mục
   const openCreateModal = () => {
     setEditingCategory(null);
     setModalOpen(true);
   };
 
+  // Mở form chỉnh sửa danh mục
   const openEditModal = (category: Category) => {
     setEditingCategory(category);
     setModalOpen(true);
   };
 
+  // Lưu danh mục
   const saveCategory = (values: CategoryFormValues) => {
     if (editingCategory) {
       setCategories((current) =>
@@ -128,28 +145,34 @@ export default function CategoriesPage() {
     setEditingCategory(null);
   };
 
-  const deleteCategory = (category: Category) => {
-    const childCategories = categories.filter(
-      (item) => item.parentId === category.id,
-    );
+  // Mở hộp thoại xác nhận xóa
+  const requestDeleteCategory = (category: Category) => {
+    setPendingDelete(category);
+  };
 
-    const message = childCategories.length
-      ? `Danh mục "${category.name}" đang có ${childCategories.length} danh mục con. Xóa danh mục này sẽ chuyển các danh mục con thành danh mục gốc. Tiếp tục?`
-      : `Mày có chắc muốn xóa danh mục "${category.name}" khỏi dữ liệu mẫu hiện tại không?`;
+  // Xác nhận xóa danh mục
+  const confirmDeleteCategory = () => {
+    if (!pendingDelete || deleteLoading) return;
 
-    if (!window.confirm(message)) return;
+    const categoryId = pendingDelete.id;
+
+    setDeleteLoading(true);
 
     setCategories((current) =>
       current
-        .filter((item) => item.id !== category.id)
+        .filter((item) => item.id !== categoryId)
         .map((item) =>
-          item.parentId === category.id
+          item.parentId === categoryId
             ? { ...item, parentId: null }
             : item,
         ),
     );
+
+    setPendingDelete(null);
+    setDeleteLoading(false);
   };
 
+  // Bật / tắt trạng thái danh mục
   const toggleStatus = (category: Category) => {
     setCategories((current) =>
       current.map((item) =>
@@ -164,52 +187,59 @@ export default function CategoriesPage() {
     );
   };
 
+  // Thay đổi từ khóa tìm kiếm
   const changeSearch = (value: string) => {
     setSearch(value);
     setPage(1);
   };
 
+  // Thay đổi trạng thái lọc
   const changeStatus = (value: StatusFilter) => {
     setStatusFilter(value);
     setPage(1);
   };
 
+  // Xóa toàn bộ bộ lọc
+  const resetFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setPage(1);
+  };
+
+  const hasActiveFilters = search.trim() !== '' || statusFilter !== 'all';
+
+  const pendingChildrenCount = pendingDelete
+    ? categories.filter((item) => item.parentId === pendingDelete.id).length
+    : 0;
+
+  const deleteDescription = pendingDelete
+    ? pendingChildrenCount > 0
+      ? `Danh mục "${pendingDelete.name}" hiện có ${pendingChildrenCount} danh mục con. Nếu tiếp tục, danh mục sẽ bị xóa và các danh mục con sẽ được chuyển thành danh mục gốc.`
+      : `Mày có chắc muốn xóa danh mục "${pendingDelete.name}" khỏi dữ liệu mẫu hiện tại không?`
+    : '';
+
   return (
     <div className="min-h-full bg-bg-app px-4 py-6 text-text-primary sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1600px] space-y-6">
-        {/* Page heading */}
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-xs text-text-muted">
-              <span>Quản lý cửa hàng</span>
-              <span>/</span>
-              <span className="text-text-secondary">Danh mục</span>
-            </div>
-
-            <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
-              Quản lý danh mục
-            </h1>
-
-            <p className="mt-1.5 max-w-2xl text-sm text-text-secondary">
-              Tổ chức danh mục sản phẩm, quản lý danh mục cha và danh mục con,
-              theo dõi trạng thái hiển thị.
-            </p>
-          </div>
-
-          <Button onClick={openCreateModal}>
-            <Plus size={17} />
-            Thêm danh mục
-          </Button>
-        </div>
+        {/* Page header dùng chung */}
+        <PageHeader
+          eyebrow="QUẢN LÝ CỬA HÀNG / DANH MỤC"
+          title="Quản lý danh mục"
+          description="Tổ chức danh mục sản phẩm, quản lý danh mục cha và danh mục con, theo dõi trạng thái hiển thị."
+          actions={
+            <Button onClick={openCreateModal}>
+              <Plus size={17} />
+              Thêm danh mục
+            </Button>
+          }
+        />
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Card>
             <CardBody className="flex items-center justify-between gap-4 p-5">
               <div>
-                <p className="text-sm text-text-secondary">
-                  Tổng danh mục
-                </p>
+                <p className="text-sm text-text-secondary">Tổng danh mục</p>
                 <p className="mt-2 text-2xl font-semibold tabular-nums">
                   {stats.total}
                 </p>
@@ -217,6 +247,7 @@ export default function CategoriesPage() {
                   Tất cả danh mục
                 </p>
               </div>
+
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-accent-primary">
                 <Layers3 size={21} />
               </div>
@@ -236,6 +267,7 @@ export default function CategoriesPage() {
                   Danh mục đang bật
                 </p>
               </div>
+
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-primary/20 bg-accent-primary/10 text-accent-primary">
                 <CheckCircle2 size={21} />
               </div>
@@ -245,9 +277,7 @@ export default function CategoriesPage() {
           <Card>
             <CardBody className="flex items-center justify-between gap-4 p-5">
               <div>
-                <p className="text-sm text-text-secondary">
-                  Danh mục gốc
-                </p>
+                <p className="text-sm text-text-secondary">Danh mục gốc</p>
                 <p className="mt-2 text-2xl font-semibold tabular-nums">
                   {stats.rootCategories}
                 </p>
@@ -255,6 +285,7 @@ export default function CategoriesPage() {
                   Cấp cao nhất
                 </p>
               </div>
+
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-cyan-400">
                 <FolderTree size={21} />
               </div>
@@ -274,6 +305,7 @@ export default function CategoriesPage() {
                   Tổng theo dữ liệu mẫu
                 </p>
               </div>
+
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-violet-400">
                 <Package size={21} />
               </div>
@@ -281,169 +313,111 @@ export default function CategoriesPage() {
           </Card>
         </div>
 
-        {/* Main table */}
+        {/* Danh sách danh mục */}
         <Card>
-          <div className="flex flex-col justify-between gap-4 border-b border-border-default px-5 py-5 lg:flex-row lg:items-center">
-            <div>
-              <h2 className="font-semibold text-text-primary">
-                Danh sách danh mục
-              </h2>
-              <p className="mt-1 text-sm text-text-muted">
-                Tìm kiếm, lọc và quản lý danh mục sản phẩm.
-              </p>
-            </div>
+          <div className="border-b border-border-default px-5 py-5">
+            <h2 className="font-semibold text-text-primary">
+              Danh sách danh mục
+            </h2>
+            <p className="mt-1 text-sm text-text-muted">
+              Tìm kiếm, lọc và quản lý danh mục sản phẩm.
+            </p>
+          </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="w-full sm:w-72">
-                <Input
-                  aria-label="Tìm kiếm danh mục"
-                  placeholder="Tìm tên, slug, mô tả..."
-                  value={search}
-                  onChange={(event) => changeSearch(event.target.value)}
-                  icon={<Search size={16} />}
-                  rightElement={
-                    search ? (
-                      <button
-                        type="button"
-                        aria-label="Xóa từ khóa tìm kiếm"
-                        onClick={() => changeSearch('')}
-                        className="hover:text-text-primary"
-                      >
-                        <X size={15} />
-                      </button>
-                    ) : undefined
-                  }
-                />
-              </div>
+          {/* Bộ lọc dùng chung */}
+          <div className="border-b border-border-default p-4 sm:p-5">
+            <FilterBar
+              onReset={resetFilters}
+              showReset={hasActiveFilters}
+            >
+              <SearchBar
+                value={search}
+                onChange={changeSearch}
+                placeholder="Tìm tên, slug, mô tả..."
+                ariaLabel="Tìm kiếm danh mục"
+                className="w-full sm:max-w-sm"
+              />
 
-              <div className="relative min-w-45">
+              <div className="relative w-full sm:w-56">
                 <select
                   aria-label="Lọc theo trạng thái"
                   value={statusFilter}
                   onChange={(event) =>
                     changeStatus(event.target.value as StatusFilter)
                   }
-                  className="h-input w-full appearance-none rounded-btn border border-border-strong bg-bg-elevated py-0 pl-4 pr-10 text-sm text-text-primary outline-none transition focus:border-accent-primary focus:ring-1 focus:ring-accent-primary"
+                  className="h-11 w-full appearance-none rounded-lg border border-border-default bg-bg-app py-0 pl-3 pr-10 text-sm text-text-primary outline-none transition focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15"
                 >
                   <option value="all">Tất cả trạng thái</option>
                   <option value="active">Đang hoạt động</option>
                   <option value="inactive">Ngừng hoạt động</option>
                 </select>
-                <ChevronDown
-                  size={15}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted"
-                />
+
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-muted">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
               </div>
-            </div>
+            </FilterBar>
           </div>
 
+          {/* Kết quả lọc */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default bg-bg-surface px-5 py-3">
             <p className="text-sm text-text-secondary">
-              Hiển thị{' '}
-              <span className="font-semibold text-text-primary">
-                {filteredCategories.length === 0
-                  ? 0
-                  : (safePage - 1) * PAGE_SIZE + 1}
-                {'–'}
-                {Math.min(safePage * PAGE_SIZE, filteredCategories.length)}
-              </span>{' '}
-              trong{' '}
+              Tìm thấy{' '}
               <span className="font-semibold text-text-primary">
                 {filteredCategories.length}
               </span>{' '}
               danh mục
             </p>
 
-            {(search || statusFilter !== 'all') && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setSearch('');
-                  setStatusFilter('all');
-                  setPage(1);
-                }}
-              >
-                <X size={14} />
-                Xóa bộ lọc
-              </Button>
+            {hasActiveFilters && (
+              <p className="text-xs text-text-muted">
+                Kết quả đã được áp dụng bộ lọc
+              </p>
             )}
           </div>
 
+          {/* Giữ bảng nghiệp vụ riêng để bảo toàn các thao tác danh mục */}
           <CategoryTable
             categories={paginatedCategories}
             allCategories={categories}
             onEdit={openEditModal}
-            onDelete={deleteCategory}
+            onDelete={requestDeleteCategory}
             onToggleStatus={toggleStatus}
           />
 
-          {/* Pagination */}
-          <div className="flex flex-col gap-3 border-t border-border-default px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-text-muted">
-              Trang {safePage} / {totalPages}
-            </p>
-
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-9! px-3!"
-                disabled={safePage <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                <ChevronLeft size={16} />
-                Trước
-              </Button>
-
-              {Array.from({ length: totalPages }, (_, index) => index + 1)
-                .filter(
-                  (number) =>
-                    number === 1 ||
-                    number === totalPages ||
-                    Math.abs(number - safePage) <= 1,
-                )
-                .map((number, index, numbers) => (
-                  <span key={number} className="contents">
-                    {index > 0 && number - numbers[index - 1] > 1 && (
-                      <span className="px-1 text-text-muted">…</span>
-                    )}
-                    <Button
-                      type="button"
-                      variant={number === safePage ? 'primary' : 'secondary'}
-                      className="h-9! w-9! px-0!"
-                      aria-label={`Trang ${number}`}
-                      aria-current={number === safePage ? 'page' : undefined}
-                      onClick={() => setPage(number)}
-                    >
-                      {number}
-                    </Button>
-                  </span>
-                ))}
-
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-9! px-3!"
-                disabled={safePage >= totalPages}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-              >
-                Sau
-                <ChevronRight size={16} />
-              </Button>
-            </div>
+          {/* Phân trang dùng chung */}
+          <div className="px-5 pb-4">
+            <Pagination
+              page={safePage}
+              pageSize={PAGE_SIZE}
+              total={filteredCategories.length}
+              onPageChange={setPage}
+              pageSizeOptions={[PAGE_SIZE]}
+            />
           </div>
         </Card>
 
-        <p className="text-xs text-text-muted">
+        {/* Ghi chú dữ liệu mẫu */}
+        <p className="text-xs leading-5 text-text-muted">
           <Tags size={13} className="mr-1 inline-block" />
           Dữ liệu hiện tại là dữ liệu mẫu. Các thay đổi chỉ tồn tại trong state
           của trang và sẽ mất khi tải lại trình duyệt.
         </p>
       </div>
 
+      {/* Form tạo / sửa danh mục */}
       <CategoryFormModal
         open={modalOpen}
         category={editingCategory}
@@ -453,6 +427,19 @@ export default function CategoriesPage() {
           setEditingCategory(null);
         }}
         onSave={saveCategory}
+      />
+
+      {/* Xác nhận xóa dùng chung */}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Xác nhận xóa danh mục"
+        description={deleteDescription}
+        confirmText="Xóa danh mục"
+        cancelText="Giữ lại"
+        variant="danger"
+        loading={deleteLoading}
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setPendingDelete(null)}
       />
     </div>
   );

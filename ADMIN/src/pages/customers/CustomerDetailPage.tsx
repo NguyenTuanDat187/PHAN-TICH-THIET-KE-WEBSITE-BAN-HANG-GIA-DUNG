@@ -1,110 +1,103 @@
-import { Link, useParams } from "react-router-dom";
+
+import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
-  Mail,
-  Phone,
-  MapPin,
+  Ban,
   CalendarDays,
+  Crown,
+  Ellipsis,
+  Mail,
+  MapPin,
+  Package,
+  Pencil,
+  Phone,
+  ReceiptText,
   ShoppingBag,
   Wallet,
-  Crown,
-  Pencil,
-  Ban,
-  Clock3,
-  Package,
-  ReceiptText,
-  Ellipsis,
-} from "lucide-react";
+  UserRound,
+} from 'lucide-react';
 
-import { customersMock } from "../../mocks/customers.mock";
+import { Button } from '../../components/ui/buttons/Button';
+import StatCard from '../../components/shared/StatCard';
+import StatusBadge from '../../components/shared/StatusBadge';
+
+import { customersMock } from '../../mocks/customers.mock';
+
 import type {
   Customer,
   CustomerStatus,
   CustomerSegment,
-} from "../../types/customer.types";
+} from '../../types/customer.types';
 
 /* =====================================================
    FORMATTERS
 ===================================================== */
 
 const money = (value: number) =>
-  new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
+  new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
     maximumFractionDigits: 0,
   }).format(value);
 
-const date = (value: string) => {
-  if (!value) return "Chưa có đơn hàng";
+const formatDate = (value: string) => {
+  if (!value) return 'Chưa có đơn hàng';
 
-  const parsed = new Date(`${value}T00:00:00`);
+  const parsed = new Date(`${value.slice(0, 10)}T00:00:00`);
 
   if (Number.isNaN(parsed.getTime())) {
-    return "Chưa có đơn hàng";
+    return 'Chưa có đơn hàng';
   }
 
-  return parsed.toLocaleDateString("vi-VN");
+  return parsed.toLocaleDateString('vi-VN');
 };
 
 const statusText: Record<CustomerStatus, string> = {
-  active: "Hoạt động",
-  inactive: "Không hoạt động",
-  blocked: "Đã khóa",
+  active: 'Hoạt động',
+  inactive: 'Không hoạt động',
+  blocked: 'Đã khóa',
+};
+
+const statusVariant: Record<
+  CustomerStatus,
+  'success' | 'danger' | 'neutral'
+> = {
+  active: 'success',
+  inactive: 'neutral',
+  blocked: 'danger',
 };
 
 const segmentText: Record<CustomerSegment, string> = {
-  new: "Khách hàng mới",
-  regular: "Khách hàng thân thiết",
-  vip: "Khách hàng VIP",
+  new: 'Khách hàng mới',
+  regular: 'Khách hàng thân thiết',
+  vip: 'Khách hàng VIP',
 };
 
-/* =====================================================
-   SHARED STYLES
-===================================================== */
-
 const panelClass =
-  "rounded-xl border border-border-default bg-bg-surface";
-
-
-const primaryButtonClass =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent-primary px-4 text-sm font-semibold text-[#111111] transition-colors duration-200 hover:bg-accent-hover active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-app";
-
-const secondaryButtonClass =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border-strong bg-bg-surface px-3.5 text-sm font-medium text-text-secondary transition-colors duration-200 hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary";
-
-const iconButtonClass =
-  "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-secondary transition-colors duration-200 hover:border-accent-primary/40 hover:bg-accent-primary/10 hover:text-accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary";
+  'rounded-xl border border-border-default bg-bg-surface';
 
 /* =====================================================
-   STATUS BADGE
+   CUSTOMER STATUS
+   Reuse shared StatusBadge
 ===================================================== */
 
-function StatusBadge({
+function CustomerStatusBadge({
   status,
 }: {
   status: CustomerStatus;
 }) {
-  const styles: Record<CustomerStatus, string> = {
-    active:
-      "border-[#65D928]/25 bg-[#65D928]/10 text-[#8BE85A]",
-    inactive:
-      "border-[#858987]/25 bg-[#858987]/10 text-[#B5B7B6]",
-    blocked:
-      "border-[#F04438]/25 bg-[#F04438]/10 text-[#FF8178]",
-  };
-
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${styles[status]}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {statusText[status]}
-    </span>
+    <StatusBadge
+      status={statusText[status]}
+      variant={statusVariant[status]}
+      className="border border-border-default"
+    />
   );
 }
 
 /* =====================================================
-   CUSTOMER SEGMENT BADGE
+   CUSTOMER SEGMENT
+   Domain-specific component
 ===================================================== */
 
 function SegmentBadge({
@@ -113,63 +106,54 @@ function SegmentBadge({
   segment: CustomerSegment;
 }) {
   const styles: Record<CustomerSegment, string> = {
-    new: "border-[#1084A9]/25 bg-[#1084A9]/10 text-[#55B9D8]",
-    regular:
-      "border-[#A78BFA]/25 bg-[#A78BFA]/10 text-[#C4B5FD]",
-    vip: "border-[#65D928]/25 bg-[#65D928]/10 text-[#8BE85A]",
+    new: 'border-[#1084A9]/25 bg-[#1084A9]/10 text-[#55B9D8]',
+    regular: 'border-[#A78BFA]/25 bg-[#A78BFA]/10 text-[#C4B5FD]',
+    vip: 'border-[#65D928]/25 bg-[#65D928]/10 text-[#8BE85A]',
   };
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium ${styles[segment]}`}
     >
-      {segment === "vip" && <Crown size={13} />}
+      {segment === 'vip' && (
+        <Crown size={13} aria-hidden="true" />
+      )}
+
       {segmentText[segment]}
     </span>
   );
 }
 
 /* =====================================================
-   STATISTIC CARD
+   CUSTOMER AVATAR
 ===================================================== */
 
-function DetailStat({
-  icon: Icon,
-  label,
-  value,
-  description,
-  accent,
+function ProfileAvatar({
+  customer,
 }: {
-  icon: typeof ShoppingBag;
-  label: string;
-  value: string;
-  description: string;
-  accent: string;
+  customer: Customer;
 }) {
+  const initials = customer.name
+    .trim()
+    .split(/\s+/)
+    .slice(-2)
+    .map((word) => word[0] ?? '')
+    .join('')
+    .toUpperCase();
+
   return (
-    <section className={`${panelClass} min-w-0 p-4 transition-colors duration-200 hover:bg-bg-elevated sm:p-5`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-text-secondary">
-            {label}
-          </p>
-
-          <p className="mt-2 wrap-break-word text-xl font-semibold tracking-tight text-text-primary">
-            {value}
-          </p>
-        </div>
-
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-default bg-bg-elevated ${accent}`}
-        >
-          <Icon size={19} strokeWidth={1.8} />
-        </div>
-      </div>
-
-      <p className="mt-3 text-xs leading-relaxed text-text-muted">
-        {description}
-      </p>
-    </section>
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border
+     border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-18 sm:w-18 sm:text-2xl">
+      {customer.avatar ? (
+        <img
+          src={customer.avatar}
+          alt={`Ảnh đại diện của ${customer.name}`}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        initials || <UserRound size={26} />
+      )}
+    </div>
   );
 }
 
@@ -189,7 +173,7 @@ function InfoRow({
   return (
     <div className="flex gap-3 border-b border-border-default py-3 last:border-b-0">
       <div className="mt-0.5 shrink-0 text-text-muted">
-        <Icon size={16} strokeWidth={1.8} />
+        <Icon size={16} strokeWidth={1.8} aria-hidden="true" />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -198,41 +182,9 @@ function InfoRow({
         </p>
 
         <p className="mt-1 wrap-break-word text-sm text-text-primary">
-          {value || "Chưa cập nhật"}
+          {value || 'Chưa cập nhật'}
         </p>
       </div>
-    </div>
-  );
-}
-
-/* =====================================================
-   CUSTOMER AVATAR
-===================================================== */
-
-function ProfileAvatar({
-  customer,
-}: {
-  customer: Customer;
-}) {
-  const initials = customer.name
-    .trim()
-    .split(/\s+/)
-    .slice(-2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-[72px] sm:w-[72px] sm:text-2xl">
-      {customer.avatar ? (
-        <img
-          src={customer.avatar}
-          alt={customer.name}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        initials
-      )}
     </div>
   );
 }
@@ -252,7 +204,7 @@ function SectionHeading({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default px-4 py-4 sm:px-5">
-      <div>
+      <div className="min-w-0">
         <h2 className="text-sm font-semibold text-text-primary">
           {title}
         </h2>
@@ -280,14 +232,14 @@ export default function CustomerDetailPage() {
     (item) => String(item.id) === id,
   );
 
-  /* Customer not found */
-
   if (!customer) {
     return (
       <div className="min-h-full bg-bg-app p-4 text-text-primary sm:p-6">
-        <div className={`${panelClass} mx-auto max-w-2xl p-8 text-center sm:p-12`}>
+        <div
+          className={`${panelClass} mx-auto max-w-2xl p-8 text-center sm:p-12`}
+        >
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-text-muted">
-            <UsersFallback />
+            <UserRound size={22} aria-hidden="true" />
           </div>
 
           <h1 className="mt-4 text-lg font-semibold text-text-primary">
@@ -298,8 +250,11 @@ export default function CustomerDetailPage() {
             Hồ sơ khách hàng không tồn tại trong dữ liệu hiện tại.
           </p>
 
-          <Link to="/customers" className={`${primaryButtonClass} mt-6`}>
-            <ArrowLeft size={16} />
+          <Link
+            to="/customers"
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent-primary px-4 py-2.5 text-sm font-semibold text-[#111111] transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
             Quay lại danh sách
           </Link>
         </div>
@@ -310,11 +265,10 @@ export default function CustomerDetailPage() {
   return (
     <div className="min-h-full bg-bg-app p-4 text-text-primary sm:p-5 xl:p-6">
       <div className="mx-auto flex max-w-[1800px] flex-col gap-4">
-
         {/* BREADCRUMB */}
 
         <nav
-          aria-label="Breadcrumb"
+          aria-label="Đường dẫn điều hướng"
           className="flex flex-wrap items-center gap-2 text-xs text-text-muted"
         >
           <Link
@@ -324,7 +278,7 @@ export default function CustomerDetailPage() {
             Dashboard
           </Link>
 
-          <span>/</span>
+          <span aria-hidden="true">/</span>
 
           <Link
             to="/customers"
@@ -333,25 +287,23 @@ export default function CustomerDetailPage() {
             Khách hàng
           </Link>
 
-          <span>/</span>
+          <span aria-hidden="true">/</span>
 
           <span className="font-medium text-text-secondary">
             {customer.code}
           </span>
         </nav>
 
-        {/* BACK LINK */}
+        {/* PROFILE HEADER */}
 
         <div>
           <Link
             to="/customers"
             className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-text-secondary transition-colors hover:text-accent-primary"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={15} aria-hidden="true" />
             Quay lại danh sách khách hàng
           </Link>
-
-          {/* CUSTOMER PROFILE HEADER */}
 
           <section className={`${panelClass} p-4 sm:p-5`}>
             <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
@@ -364,9 +316,9 @@ export default function CustomerDetailPage() {
                       {customer.name}
                     </h1>
 
-                    {customer.segment === "vip" && (
+                    {customer.segment === 'vip' && (
                       <span className="inline-flex items-center gap-1 rounded-md border border-[#65D928]/25 bg-[#65D928]/10 px-2 py-1 text-[11px] font-semibold text-[#8BE85A]">
-                        <Crown size={12} />
+                        <Crown size={12} aria-hidden="true" />
                         VIP
                       </span>
                     )}
@@ -378,97 +330,108 @@ export default function CustomerDetailPage() {
 
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <SegmentBadge segment={customer.segment} />
-                    <StatusBadge status={customer.status} />
+                    <CustomerStatusBadge status={customer.status} />
                   </div>
                 </div>
               </div>
 
-              {/* PROFILE ACTIONS */}
+              {/* Chưa kết nối nghiệp vụ chỉnh sửa/khóa tài khoản */}
 
               <div className="flex flex-wrap items-center gap-2">
-                <button
+                <Button
                   type="button"
-                  onClick={() =>
-                    alert(
-                      "Chức năng chỉnh sửa khách hàng sẽ được tích hợp sau.",
-                    )
-                  }
-                  className={secondaryButtonClass}
+                  variant="secondary"
+                  disabled
+                  title="Chức năng chỉnh sửa chưa được triển khai"
                 >
-                  <Pencil size={15} />
+                  <Pencil size={15} aria-hidden="true" />
                   Chỉnh sửa
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  onClick={() =>
-                    alert(
-                      "Chức năng khóa tài khoản sẽ được tích hợp sau.",
-                    )
-                  }
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-status-danger/30
-                   bg-status-danger/5 px-3.5 text-sm font-medium text-[#FF8178] transition-colors duration-200
-                    hover:bg-status-danger/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-danger"
+                  variant="secondary"
+                  disabled
+                  title="Chức năng khóa tài khoản chưa được triển khai"
                 >
-                  <Ban size={15} />
+                  <Ban size={15} aria-hidden="true" />
                   Khóa tài khoản
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
+                  variant="icon"
+                  disabled
                   aria-label="Thao tác khác"
-                  onClick={() =>
-                    alert("Menu thao tác sẽ được tích hợp sau.")
-                  }
-                  className={iconButtonClass}
+                  title="Chưa có thao tác bổ sung"
                 >
-                  <Ellipsis size={19} />
-                </button>
+                  <Ellipsis size={19} aria-hidden="true" />
+                </Button>
               </div>
             </div>
           </section>
         </div>
 
-        {/* CUSTOMER STATISTICS */}
+        {/* CUSTOMER STATISTICS
+            Reuse shared StatCard */}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <DetailStat
-            icon={ShoppingBag}
-            label="Tổng đơn hàng"
-            value={customer.totalOrders.toLocaleString("vi-VN")}
-            description="Số đơn hàng đã ghi nhận"
-            accent="text-[#65D928]"
-          />
+          <div className="min-w-0">
+            <StatCard
+              icon={ShoppingBag}
+              label="Tổng đơn hàng"
+              value={customer.totalOrders.toLocaleString('vi-VN')}
+              accent="primary"
+            />
 
-          <DetailStat
-            icon={Wallet}
-            label="Tổng chi tiêu"
-            value={money(customer.totalSpent)}
-            description="Tổng giá trị mua hàng"
-            accent="text-[#55B9D8]"
-          />
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Số đơn hàng đã ghi nhận
+            </p>
+          </div>
 
-          <DetailStat
-            icon={CalendarDays}
-            label="Ngày tham gia"
-            value={date(customer.createdAt)}
-            description="Ngày tạo hồ sơ khách hàng"
-            accent="text-[#A78BFA]"
-          />
+          <div className="min-w-0">
+            <StatCard
+              icon={Wallet}
+              label="Tổng chi tiêu"
+              value={money(customer.totalSpent)}
+              accent="cyan"
+            />
 
-          <DetailStat
-            icon={Clock3}
-            label="Đơn hàng gần nhất"
-            value={date(customer.lastOrderDate)}
-            description="Thời điểm mua hàng gần nhất"
-            accent="text-[#F59E0B]"
-          />
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Tổng giá trị mua hàng
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <StatCard
+              icon={CalendarDays}
+              label="Ngày tham gia"
+              value={formatDate(customer.createdAt)}
+              accent="purple"
+            />
+
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Ngày tạo hồ sơ khách hàng
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <StatCard
+              icon={ReceiptText}
+              label="Đơn hàng gần nhất"
+              value={formatDate(customer.lastOrderDate)}
+              accent="warning"
+            />
+
+            <p className="px-1 pt-2 text-xs text-text-muted">
+              Thời điểm mua hàng gần nhất
+            </p>
+          </div>
         </div>
 
         {/* MAIN CONTENT */}
 
         <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-3">
-
           {/* PERSONAL INFORMATION */}
 
           <section className={`${panelClass} min-w-0 xl:col-span-1`}>
@@ -476,18 +439,15 @@ export default function CustomerDetailPage() {
               title="Thông tin cá nhân"
               description="Thông tin liên hệ và hồ sơ"
               action={
-                <button
+                <Button
                   type="button"
+                  variant="icon"
+                  disabled
                   aria-label="Chỉnh sửa thông tin cá nhân"
-                  onClick={() =>
-                    alert(
-                      "Chức năng chỉnh sửa thông tin sẽ được tích hợp sau.",
-                    )
-                  }
-                  className={iconButtonClass}
+                  title="Chức năng chỉnh sửa chưa được triển khai"
                 >
-                  <Pencil size={15} />
-                </button>
+                  <Pencil size={15} aria-hidden="true" />
+                </Button>
               }
             />
 
@@ -513,7 +473,7 @@ export default function CustomerDetailPage() {
               <InfoRow
                 icon={CalendarDays}
                 label="Ngày đăng ký"
-                value={date(customer.createdAt)}
+                value={formatDate(customer.createdAt)}
               />
 
               <InfoRow
@@ -534,9 +494,8 @@ export default function CustomerDetailPage() {
                 </p>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-text-secondary">
-                {customer.notes ||
-                  "Chưa có ghi chú cho khách hàng này."}
+              <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-text-secondary">
+                {customer.notes || 'Chưa có ghi chú cho khách hàng này.'}
               </p>
             </div>
           </section>
@@ -548,27 +507,23 @@ export default function CustomerDetailPage() {
               title="Lịch sử đơn hàng"
               description="Tổng quan hoạt động mua hàng của khách hàng"
               action={
-                <button
+                <Button
                   type="button"
-                  onClick={() =>
-                    alert(
-                      "Trang danh sách đơn hàng sẽ được tích hợp sau.",
-                    )
-                  }
-                  className="text-xs font-semibold text-accent-primary transition-colors hover:text-accent-hover"
+                  variant="ghost"
+                  disabled
+                  title="Chức năng xem đơn hàng chưa được triển khai"
                 >
                   Xem tất cả
-                </button>
+                </Button>
               }
             />
 
             <div className="p-4 sm:p-5">
-
               {/* ORDER SUMMARY */}
 
               <div className="flex flex-col gap-3 rounded-lg border border-border-default bg-bg-elevated/60 p-4 sm:flex-row sm:items-center">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border-default bg-bg-surface text-accent-primary">
-                  <Package size={19} />
+                  <Package size={19} aria-hidden="true" />
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -577,12 +532,12 @@ export default function CustomerDetailPage() {
                   </p>
 
                   <p className="mt-1 text-xs text-text-muted">
-                    {customer.totalOrders.toLocaleString("vi-VN")} đơn hàng đã ghi nhận
+                    {customer.totalOrders.toLocaleString('vi-VN')} đơn hàng đã ghi nhận
                   </p>
                 </div>
 
                 <div className="sm:text-right">
-                  <p className="text-sm font-semibold text-text-primary">
+                  <p className="wrap-break-word text-sm font-semibold text-text-primary">
                     {money(customer.totalSpent)}
                   </p>
 
@@ -592,11 +547,11 @@ export default function CustomerDetailPage() {
                 </div>
               </div>
 
-              {/* ORDER EMPTY STATE */}
+              {/* ORDER DETAIL EMPTY STATE */}
 
               <div className="mt-4 rounded-lg border border-dashed border-border-strong bg-bg-app px-4 py-9 text-center">
                 <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-border-default bg-bg-elevated text-text-muted">
-                  <ReceiptText size={21} />
+                  <ReceiptText size={21} aria-hidden="true" />
                 </div>
 
                 <h3 className="mt-3 text-sm font-semibold text-text-primary">
@@ -614,7 +569,7 @@ export default function CustomerDetailPage() {
 
               <div className="mt-4 flex items-start gap-3 rounded-lg border border-[#65D928]/20 bg-[#65D928]/5 p-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#65D928]/20 bg-[#65D928]/10 text-[#8BE85A]">
-                  <Crown size={17} />
+                  <Crown size={17} aria-hidden="true" />
                 </div>
 
                 <div className="min-w-0">
@@ -623,7 +578,7 @@ export default function CustomerDetailPage() {
                   </p>
 
                   <p className="mt-1 text-xs leading-relaxed text-text-secondary">
-                    Khách hàng thuộc nhóm{" "}
+                    Khách hàng thuộc nhóm{' '}
                     <span className="font-semibold text-[#8BE85A]">
                       {segmentText[customer.segment]}
                     </span>
@@ -638,12 +593,4 @@ export default function CustomerDetailPage() {
       </div>
     </div>
   );
-}
-
-/* =====================================================
-   EMPTY STATE ICON
-===================================================== */
-
-function UsersFallback() {
-  return <ShoppingBag size={21} />;
 }
