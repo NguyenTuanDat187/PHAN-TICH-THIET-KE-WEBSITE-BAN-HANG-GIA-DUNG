@@ -1,6 +1,12 @@
 
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { X, FolderTree, Info } from 'lucide-react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FormEvent,
+} from 'react';
+import { FolderTree, Info, X } from 'lucide-react';
 
 import { Button } from '../../../components/ui/buttons/Button';
 import { Input } from '../../../components/ui/forms/Input';
@@ -26,16 +32,17 @@ const emptyForm: CategoryFormValues = {
   status: 'active',
 };
 
-function createSlug(value: string) {
+function createSlug(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .replace(/đ/gi, (character) =>
+      character === 'Đ' ? 'D' : 'd',
+    )
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-+|-+$/g, '');
 }
 
 export default function CategoryFormModal({
@@ -45,9 +52,16 @@ export default function CategoryFormModal({
   onClose,
   onSave,
 }: CategoryFormModalProps) {
-  const [form, setForm] = useState<CategoryFormValues>(emptyForm);
+  const generatedId = useId();
+  const titleId = `${generatedId}-title`;
+  const descriptionId = `${generatedId}-description`;
+
+  const [form, setForm] = useState<CategoryFormValues>({
+    ...emptyForm,
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Khởi tạo form khi mở modal hoặc đổi danh mục cần chỉnh sửa.
   useEffect(() => {
     if (!open) return;
 
@@ -66,8 +80,7 @@ export default function CategoryFormModal({
     setErrors({});
   }, [open, category]);
 
-  // Tìm tất cả danh mục con, kể cả các cấp sâu hơn.
-  // Không cho chọn chính nó hoặc hậu duệ làm danh mục cha.
+  // Loại chính danh mục hiện tại và toàn bộ hậu duệ khỏi danh sách cha.
   const availableParents = useMemo(() => {
     if (!category) return categories;
 
@@ -78,7 +91,7 @@ export default function CategoryFormModal({
     while (changed) {
       changed = false;
 
-      categories.forEach((item) => {
+      for (const item of categories) {
         if (
           item.parentId &&
           excludedIds.has(item.parentId) &&
@@ -87,16 +100,20 @@ export default function CategoryFormModal({
           excludedIds.add(item.id);
           changed = true;
         }
-      });
+      }
     }
 
-    return categories.filter((item) => !excludedIds.has(item.id));
+    return categories.filter(
+      (item) => !excludedIds.has(item.id),
+    );
   }, [categories, category]);
 
+  // Khóa cuộn trang nền và hỗ trợ đóng bằng Escape.
   useEffect(() => {
     if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
+
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -134,6 +151,7 @@ export default function CategoryFormModal({
     setForm((previous) => ({
       ...previous,
       name,
+      // Chỉ tự sinh slug khi tạo mới danh mục.
       slug: category ? previous.slug : createSlug(name),
     }));
 
@@ -147,10 +165,11 @@ export default function CategoryFormModal({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors: Record<string, string> = {};
-
     const normalizedName = form.name.trim();
     const normalizedSlug = createSlug(form.slug);
+    const normalizedNameLower = normalizedName.toLocaleLowerCase('vi');
+
+    const nextErrors: Record<string, string> = {};
 
     if (!normalizedName) {
       nextErrors.name = 'Vui lòng nhập tên danh mục.';
@@ -166,9 +185,9 @@ export default function CategoryFormModal({
 
     const duplicateName = categories.some(
       (item) =>
+        item.id !== category?.id &&
         item.name.trim().toLocaleLowerCase('vi') ===
-          normalizedName.toLocaleLowerCase('vi') &&
-        item.id !== category?.id,
+          normalizedNameLower,
     );
 
     if (normalizedName && duplicateName) {
@@ -177,8 +196,8 @@ export default function CategoryFormModal({
 
     const duplicateSlug = categories.some(
       (item) =>
-        item.slug.toLowerCase() === normalizedSlug.toLowerCase() &&
-        item.id !== category?.id,
+        item.id !== category?.id &&
+        item.slug.toLowerCase() === normalizedSlug.toLowerCase(),
     );
 
     if (normalizedSlug && duplicateSlug) {
@@ -187,7 +206,9 @@ export default function CategoryFormModal({
 
     if (
       form.parentId &&
-      !availableParents.some((item) => item.id === form.parentId)
+      !availableParents.some(
+        (item) => item.id === form.parentId,
+      )
     ) {
       nextErrors.parentId = 'Danh mục cha không hợp lệ.';
     }
@@ -207,7 +228,7 @@ export default function CategoryFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 p-3 sm:p-5"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/70 p-3 backdrop-blur-sm sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -218,26 +239,32 @@ export default function CategoryFormModal({
         <section
           role="dialog"
           aria-modal="true"
-          aria-labelledby="category-modal-title"
+          aria-labelledby={titleId}
+          aria-describedby={descriptionId}
           className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-card border border-border-default bg-bg-surface shadow-2xl sm:max-h-[calc(100dvh-2.5rem)]"
           onMouseDown={(event) => event.stopPropagation()}
         >
-          {/* HEADER: cố định, không cuộn */}
-          <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border-default px-5 py-4 sm:px-6">
+          {/* Header cố định */}
+          <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border-default px-5 py-4 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-primary/20 bg-accent-primary/10 text-accent-primary">
-                <FolderTree size={20} />
+                <FolderTree size={20} aria-hidden="true" />
               </div>
 
               <div className="min-w-0">
                 <h2
-                  id="category-modal-title"
+                  id={titleId}
                   className="text-lg font-semibold text-text-primary"
                 >
-                  {category ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}
+                  {category
+                    ? 'Chỉnh sửa danh mục'
+                    : 'Thêm danh mục mới'}
                 </h2>
 
-                <p className="mt-1 text-xs text-text-muted">
+                <p
+                  id={descriptionId}
+                  className="mt-1 text-xs text-text-muted"
+                >
                   Quản lý thông tin danh mục sản phẩm.
                 </p>
               </div>
@@ -251,21 +278,21 @@ export default function CategoryFormModal({
             >
               <X size={18} />
             </Button>
-          </div>
+          </header>
 
-          {/* FORM: chiếm chiều cao còn lại */}
+          {/* Form */}
           <form
             onSubmit={handleSubmit}
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
-            {/* BODY: vùng cuộn chính */}
+            {/* Nội dung cuộn */}
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-5 sm:p-6">
-              {/* THÔNG TIN CHUNG */}
               <section className="space-y-4">
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary">
                     Thông tin chung
                   </h3>
+
                   <p className="mt-1 text-xs text-text-muted">
                     Các trường có dấu * là bắt buộc.
                   </p>
@@ -292,28 +319,39 @@ export default function CategoryFormModal({
                     updateField('slug', event.target.value)
                   }
                   error={errors.slug}
-                  hint="Tự tạo từ tên danh mục; có thể chỉnh sửa."
+                  hint="Tự tạo từ tên danh mục khi thêm mới; có thể chỉnh sửa."
                   required
                   maxLength={180}
                 />
 
                 <div>
                   <label
-                    htmlFor="category-parent"
+                    htmlFor={`${generatedId}-parent`}
                     className="mb-2 block text-sm font-medium text-text-secondary"
                   >
                     Danh mục cha
                   </label>
 
                   <select
-                    id="category-parent"
+                    id={`${generatedId}-parent`}
                     value={form.parentId ?? ''}
                     onChange={(event) =>
-                      updateField('parentId', event.target.value || null)
+                      updateField(
+                        'parentId',
+                        event.target.value || null,
+                      )
+                    }
+                    aria-invalid={Boolean(errors.parentId)}
+                    aria-describedby={
+                      errors.parentId
+                        ? `${generatedId}-parent-error`
+                        : undefined
                     }
                     className="h-input w-full rounded-btn border border-border-strong bg-bg-elevated px-4 text-sm text-text-primary outline-none transition focus:border-accent-primary focus:ring-1 focus:ring-accent-primary"
                   >
-                    <option value="">Không có — danh mục gốc</option>
+                    <option value="">
+                      Không có — danh mục gốc
+                    </option>
 
                     {availableParents.map((item) => (
                       <option key={item.id} value={item.id}>
@@ -323,7 +361,10 @@ export default function CategoryFormModal({
                   </select>
 
                   {errors.parentId && (
-                    <p className="mt-1.5 text-xs text-status-danger">
+                    <p
+                      id={`${generatedId}-parent-error`}
+                      className="mt-1.5 text-xs text-status-danger"
+                    >
                       {errors.parentId}
                     </p>
                   )}
@@ -335,14 +376,14 @@ export default function CategoryFormModal({
 
                 <div>
                   <label
-                    htmlFor="category-description"
+                    htmlFor={`${generatedId}-description`}
                     className="mb-2 block text-sm font-medium text-text-secondary"
                   >
                     Mô tả
                   </label>
 
                   <textarea
-                    id="category-description"
+                    id={`${generatedId}-description`}
                     rows={3}
                     maxLength={2000}
                     value={form.description}
@@ -359,27 +400,27 @@ export default function CategoryFormModal({
                 </div>
               </section>
 
-              {/* TRẠNG THÁI */}
               <section className="space-y-3">
                 <div>
                   <h3 className="text-sm font-semibold text-text-primary">
                     Trạng thái hiển thị
                   </h3>
+
                   <p className="mt-1 text-xs text-text-muted">
-                    Danh mục ngừng hoạt động sẽ được đánh dấu trong trang quản trị.
+                    Thiết lập trạng thái hoạt động của danh mục.
                   </p>
                 </div>
 
                 <div>
                   <label
-                    htmlFor="category-status"
+                    htmlFor={`${generatedId}-status`}
                     className="mb-2 block text-sm font-medium text-text-secondary"
                   >
                     Trạng thái
                   </label>
 
                   <select
-                    id="category-status"
+                    id={`${generatedId}-status`}
                     value={form.status}
                     onChange={(event) =>
                       updateField(
@@ -398,7 +439,9 @@ export default function CategoryFormModal({
                   <Info
                     size={16}
                     className="mt-0.5 shrink-0 text-text-muted"
+                    aria-hidden="true"
                   />
+
                   <p className="text-xs leading-5 text-text-secondary">
                     {form.status === 'active'
                       ? 'Danh mục được đánh dấu đang hoạt động trong dữ liệu hiện tại.'
@@ -408,8 +451,8 @@ export default function CategoryFormModal({
               </section>
             </div>
 
-            {/* FOOTER: luôn hiển thị */}
-            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-default bg-bg-surface px-5 py-4 sm:px-6">
+            {/* Footer cố định */}
+            <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-border-default bg-bg-surface px-5 py-4 sm:px-6">
               <p className="hidden text-xs text-text-muted sm:block">
                 Kiểm tra thông tin trước khi lưu.
               </p>
@@ -427,7 +470,7 @@ export default function CategoryFormModal({
                   {category ? 'Lưu thay đổi' : 'Tạo danh mục'}
                 </Button>
               </div>
-            </div>
+            </footer>
           </form>
         </section>
       </div>
