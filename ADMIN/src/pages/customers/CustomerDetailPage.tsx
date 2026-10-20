@@ -142,7 +142,8 @@ function ProfileAvatar({
     .toUpperCase();
 
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-[72px] sm:w-[72px] sm:text-2xl">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border
+     border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-18 sm:w-18 sm:text-2xl">
       {customer.avatar ? (
         <img
           src={customer.avatar}
@@ -180,7 +181,7 @@ function InfoRow({
           {label}
         </p>
 
-        <p className="mt-1 break-words text-sm text-text-primary">
+        <p className="mt-1 wrap-break-word text-sm text-text-primary">
           {value || 'Chưa cập nhật'}
         </p>
       </div>
@@ -311,7 +312,7 @@ export default function CustomerDetailPage() {
 
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="break-words text-lg font-semibold tracking-tight text-text-primary sm:text-2xl">
+                    <h1 className="wrap-break-word text-lg font-semibold tracking-tight text-text-primary sm:text-2xl">
                       {customer.name}
                     </h1>
 
@@ -493,7 +494,7 @@ export default function CustomerDetailPage() {
                 </p>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-text-secondary">
+              <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-text-secondary">
                 {customer.notes || 'Chưa có ghi chú cho khách hàng này.'}
               </p>
             </div>
@@ -536,7 +537,7 @@ export default function CustomerDetailPage() {
                 </div>
 
                 <div className="sm:text-right">
-                  <p className="break-words text-sm font-semibold text-text-primary">
+                  <p className="wrap-break-word text-sm font-semibold text-text-primary">
                     {money(customer.totalSpent)}
                   </p>
 

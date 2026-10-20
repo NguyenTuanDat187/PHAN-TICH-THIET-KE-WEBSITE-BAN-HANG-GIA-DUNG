@@ -6,7 +6,7 @@ export default function AuthLayout() {
       {/* Left: brand panel (ẩn trên mobile) */}
       <div className="hidden lg:flex w-1/2 relative overflow-hidden border-r border-border-default">
         <div className="absolute inset-0 bg-linear-to-br from-bg-surface to-bg-app" />
-        <div className="absolute inset-0 opacity-20"
+       <div className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `radial-gradient(circle at 20% 20%, #65D92833 0%, transparent 40%),
                               radial-gradient(circle at 80% 80%, #1084A933 0%, transparent 40%)`,
