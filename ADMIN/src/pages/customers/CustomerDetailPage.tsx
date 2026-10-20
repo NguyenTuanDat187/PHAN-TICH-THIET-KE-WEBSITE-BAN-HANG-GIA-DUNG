@@ -223,7 +223,8 @@ function ProfileAvatar({
     .toUpperCase();
 
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-[72px] sm:w-[72px] sm:text-2xl">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border
+     border-border-strong bg-bg-elevated text-xl font-bold text-accent-primary sm:h-18 sm:w-18 sm:text-2xl">
       {customer.avatar ? (
         <img
           src={customer.avatar}
@@ -534,7 +535,7 @@ export default function CustomerDetailPage() {
                 </p>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-text-secondary">
+              <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-text-secondary">
                 {customer.notes ||
                   "Chưa có ghi chú cho khách hàng này."}
               </p>
