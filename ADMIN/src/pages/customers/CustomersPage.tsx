@@ -524,7 +524,7 @@ export default function CustomersPage() {
                   />
                 </div>
 
-                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-[145px]">
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-36.25">
                   <span>Trạng thái</span>
 
                   <select
@@ -544,7 +544,7 @@ export default function CustomersPage() {
                   </select>
                 </label>
 
-                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-[145px]">
+                <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-text-secondary sm:min-w-36.25">
                   <span>Phân nhóm</span>
 
                   <select
@@ -587,7 +587,7 @@ export default function CustomersPage() {
           {/* SHARED DATA TABLE */}
 
           <div className="min-w-0 overflow-x-auto px-3 pb-3 sm:px-4">
-            <div className="min-w-[1050px]">
+            <div className="min-w-262.5">
               <DataTable
                 columns={columns}
                 data={visibleCustomers}
