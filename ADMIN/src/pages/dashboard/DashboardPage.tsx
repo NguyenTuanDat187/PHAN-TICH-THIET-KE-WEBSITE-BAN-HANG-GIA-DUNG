@@ -2,7 +2,7 @@ import { DollarSign, ShoppingBag, Users, Clock, ArrowUpRight } from 'lucide-reac
 import Header from '../../layouts/Header';
 import StatCard from '../../components/shared/StatCard';
 import StatusBadge from '../../components/shared/StatusBadge';
-import { Button } from '../../components/ui/Button';
+import { Button } from '../../components/ui/buttons/Button';
 import { stats, recentOrders, topProducts } from '../../mocks/dashboard.mock';
 import { cn } from '../../utils/cn';
 
@@ -92,7 +92,7 @@ export default function DashboardPage() {
         <div className="bg-bg-surface border border-border-default rounded-card overflow-hidden">
           <div className="flex items-center justify-between p-5 border-b border-border-default">
             <h2 className="text-text-primary font-semibold">Recent Orders</h2>
-            <Button variant="ghost" className="!h-8 !text-xs">
+            <Button variant="ghost" className="h-8! text-xs!">
               View all <ArrowUpRight size={14} />
             </Button>
           </div>

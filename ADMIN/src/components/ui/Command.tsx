@@ -71,7 +71,7 @@ export default function Command({ open, onClose, groups, placeholder = 'Gõ đ�
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+    <div className="fixed inset-0 z-100 flex items-start justify-center pt-[15vh] px-4">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
         onClick={onClose}

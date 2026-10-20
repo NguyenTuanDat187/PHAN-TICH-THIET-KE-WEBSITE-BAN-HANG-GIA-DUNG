@@ -1,50 +1,46 @@
-import {
-  LayoutDashboard, Package, Tags, ShoppingBag, Users,
-  Ticket, Star, Warehouse, ChevronLeft, Store,
-} from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import { cn } from '../utils/cn';
 
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/products', label: 'Products', icon: Package },
-  { to: '/categories', label: 'Categories', icon: Tags },
-  { to: '/brands', label: 'Brands', icon: Store },
-  { to: '/orders', label: 'Orders', icon: ShoppingBag },
-  { to: '/customers', label: 'Customers', icon: Users },
-  { to: '/coupons', label: 'Coupons', icon: Ticket },
-  { to: '/reviews', label: 'Reviews', icon: Star },
-  { to: '/inventory', label: 'Inventory', icon: Warehouse },
-];
+import { NavLink } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
+
+import { navigation } from '../constants/navigation';
+import { cn } from '../utils/cn';
 
 export default function Sidebar() {
   return (
-    <aside className="w-sidebar h-screen bg-bg-sidebar border-r border-border-default flex flex-col shrink-0">
-
+    <aside className="flex h-screen w-sidebar shrink-0 flex-col border-r border-border-default bg-bg-sidebar">
       {/* Logo */}
-      <div className="h-header flex items-center gap-3 px-6 border-b border-border-default">
-        <div className="w-9 h-9 rounded-btn bg-accent-primary flex items-center justify-center">
-          <span className="text-black font-bold text-lg">A</span>
+      <div className="flex h-header shrink-0 items-center gap-3 border-b border-border-default px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-btn bg-accent-primary">
+          <span className="text-lg font-bold text-black">A</span>
         </div>
+
         <div>
-          <p className="text-text-primary font-semibold text-sm leading-tight">Admin</p>
-          <p className="text-text-muted text-xs leading-tight">Commerce</p>
+          <p className="text-sm font-semibold leading-tight text-text-primary">
+            AdminFlux
+          </p>
+          <p className="text-xs leading-tight text-text-muted">
+            Commerce
+          </p>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        {navItems.map(({ to, label, icon: Icon }) => (
+      {/* Navigation */}
+      <nav
+        aria-label="Điều hướng chính"
+        className="flex-1 space-y-1 overflow-y-auto px-3 py-4"
+      >
+        {navigation.map(({ path, label, icon: Icon }) => (
           <NavLink
-            key={to}
-            to={to}
+            key={path}
+            to={path}
+            end={path === '/admin/dashboard'}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 h-11 px-3 rounded-btn text-sm font-medium',
-                'transition-all duration-app ease-app',
+                'flex h-11 items-center gap-3 rounded-btn px-3 text-sm font-medium',
+                'transition-colors duration-200',
                 isActive
                   ? 'bg-bg-selected text-text-primary'
-                  : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
+                  : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
               )
             }
           >
@@ -55,14 +51,20 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border-default">
-        <button className={cn(
-          'flex items-center gap-3 h-11 px-3 w-full rounded-btn',
-          'text-text-secondary hover:bg-bg-hover hover:text-text-primary',
-          'transition-all duration-app ease-app text-sm'
-        )}>
-          <ChevronLeft size={18} />
-          <span>Collapse</span>
+      <div className="shrink-0 border-t border-border-default p-3">
+        <button
+          type="button"
+          className={cn(
+            'flex h-11 w-full items-center gap-3 rounded-btn px-3',
+            'text-sm text-text-secondary transition-colors duration-200',
+            'hover:bg-bg-hover hover:text-text-primary',
+          )}
+          onClick={() => {
+            // TODO: Bổ sung chức năng thu gọn sidebar.
+          }}
+        >
+          <ChevronLeft size={18} strokeWidth={1.8} />
+          <span>Thu gọn</span>
         </button>
       </div>
     </aside>

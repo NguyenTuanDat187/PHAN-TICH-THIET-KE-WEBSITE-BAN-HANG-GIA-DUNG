@@ -1,13 +1,13 @@
+
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes';
-import { ToastProvider } from './components/ui/ToastProvider';
-
+import { ToastProvider } from './components/ui/feedback/ToastProvider';
 
 export default function App() {
-  return <RouterProvider router={router} />;
-   return (
+  return (
     <ToastProvider>
       <RouterProvider router={router} />
     </ToastProvider>
-   );
+  );
 }
+  

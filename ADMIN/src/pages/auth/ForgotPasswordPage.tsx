@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react';
-import { Input } from '../../components/ui/Input';
-import { Button } from '../../components/ui/Button';
-import { Stepper } from '../../components/ui/Stepper';
-import { OtpInput } from '../../components/ui/OtpInput';
-import { PasswordStrength } from '../../components/ui/PasswordStrength';
+import { Input } from '../../components/ui/forms/Input';
+import { Button } from '../../components/ui/buttons/Button';
+import { Stepper } from '../../components/ui/navigation/Stepper';
+import { OtpInput } from '../../components/ui/forms/OtpInput';
+import { PasswordStrength } from '../../components/ui/forms/PasswordStrength';
 
 type Step = 'email' | 'otp' | 'reset' | 'done';
 
