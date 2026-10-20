@@ -1,5 +1,5 @@
-
 import type { ReactNode } from 'react';
+
 import {
   Table,
   TableBody,
@@ -38,65 +38,71 @@ export default function DataTable<T>({
 }: DataTableProps<T>) {
   return (
     <div
-      className={`w-full min-w-0 overflow-hidden rounded-xl border border-border-default bg-bg-surface ${className}`}
+      className={`w-full min-w-0 overflow-hidden bg-bg-surface ${className}`}
     >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={column.headerClassName}
-              >
-                {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {loading ? (
+      <div
+        className="w-full min-w-0 overflow-x-auto overscroll-x-contain"
+        role="region"
+        aria-label="Bảng dữ liệu"
+        tabIndex={0}
+      >
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={columns.length}>
-                <div
-                  className="flex min-h-36 items-center justify-center gap-3 text-sm text-text-secondary"
-                  role="status"
+              {columns.map((column) => (
+                <TableHead
+                  key={column.key}
+                  className={`whitespace-nowrap ${column.headerClassName ?? ''} ${column.className ?? ''}`}
                 >
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-border-strong border-t-accent-primary" />
-                  Đang tải dữ liệu...
-                </div>
-              </TableCell>
+                  {column.header}
+                </TableHead>
+              ))}
             </TableRow>
-          ) : data.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={columns.length}>
-                <div className="flex min-h-40 flex-col items-center justify-center px-4 py-8 text-center">
-                  <p className="font-semibold text-text-primary">
-                    {emptyTitle}
-                  </p>
-                  <p className="mt-1 text-sm text-text-secondary">
-                    {emptyDescription}
-                  </p>
-                </div>
-              </TableCell>
-            </TableRow>
-          ) : (
-            data.map((row, index) => (
-              <TableRow key={getRowId(row)}>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.key}
-                    className={column.className}
+          </TableHeader>
+
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <div
+                    className="flex min-h-36 items-center justify-center gap-3 text-sm text-text-secondary"
+                    role="status"
                   >
-                    {column.render(row, index)}
-                  </TableCell>
-                ))}
+                    <span className="h-5 w-5 animate-spin rounded-full border-2 border-border-strong border-t-accent-primary" />
+                    Đang tải dữ liệu...
+                  </div>
+                </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <div className="flex min-h-40 flex-col items-center justify-center px-4 py-8 text-center">
+                    <p className="font-semibold text-text-primary">
+                      {emptyTitle}
+                    </p>
+                    <p className="mt-1 max-w-md text-sm leading-6 text-text-secondary">
+                      {emptyDescription}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((row, index) => (
+                <TableRow key={getRowId(row)}>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.key}
+                      className={column.className}
+                    >
+                      {column.render(row, index)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
-    
