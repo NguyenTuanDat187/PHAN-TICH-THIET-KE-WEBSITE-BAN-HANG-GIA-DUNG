@@ -41,8 +41,7 @@
   --spacing-btn-sm: 40px;
   --spacing-header: 80px;
   --spacing-input:  44px;
-  --spacing-sidebar: 248px;
-
+--spacing-sidebar: 256px;
   /* ===== Transition ===== */
   --duration-app: 180ms;
   --ease-app: cubic-bezier(0.2, 0.8, 0.2, 1);

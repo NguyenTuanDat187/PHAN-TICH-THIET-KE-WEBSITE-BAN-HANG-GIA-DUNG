@@ -8,15 +8,19 @@ import {
   Store,
   TicketPercent,
   MessageSquare,
-  Warehouse,
   CreditCard,
   SlidersHorizontal,
   Image,
   Settings,
+  ListFilter,
+  Layers3,
+  Boxes,
+  Warehouse,
   type LucideIcon,
 } from 'lucide-react';
 
 export interface NavigationItem {
+  id: string;
   label: string;
   path: string;
   icon: LucideIcon;
@@ -26,6 +30,7 @@ export interface NavigationItem {
 export const navigation: NavigationItem[] = [
   // 1. Tổng quan
   {
+    id: 'dashboard',
     label: 'Tổng quan',
     path: '/dashboard',
     icon: LayoutDashboard,
@@ -33,72 +38,180 @@ export const navigation: NavigationItem[] = [
 
   // 2. Bán hàng
   {
-    label: 'Đơn hàng',
+    id: 'sales',
+    label: 'Bán hàng',
     path: '/orders',
     icon: ShoppingCart,
-  },
-  {
-    label: 'Thanh toán',
-    path: '/payments',
-    icon: CreditCard,
-  },
-  {
-    label: 'Mã giảm giá',
-    path: '/coupons',
-    icon: TicketPercent,
+    children: [
+      {
+        id: 'orders',
+        label: 'Đơn hàng',
+        path: '/orders',
+        icon: ShoppingCart,
+      },
+      {
+        id: 'payments',
+        label: 'Thanh toán',
+        path: '/payments',
+        icon: CreditCard,
+      },
+      {
+        id: 'promotions',
+        label: 'Khuyến mãi',
+        path: '/coupons',
+        icon: TicketPercent,
+      },
+    ],
   },
 
-  // 3. Quản lý khách hàng
+  // 3. Khách hàng
   {
+    id: 'customers',
     label: 'Khách hàng',
     path: '/customers',
     icon: Users,
+    children: [
+      {
+        id: 'customer-list',
+        label: 'Danh sách khách hàng',
+        path: '/customers',
+        icon: Users,
+      },
+    ],
   },
 
-  // 4. Quản lý sản phẩm
+  // 4. Chăm sóc khách hàng
   {
-    label: 'Sản phẩm',
+    id: 'customer-care',
+    label: 'Chăm sóc khách hàng',
+    path: '/reviews',
+    icon: MessageSquare,
+    children: [
+      {
+        id: 'product-reviews',
+        label: 'Đánh giá sản phẩm',
+        path: '/reviews',
+        icon: MessageSquare,
+      },
+    ],
+  },
+
+  // 5. Quản lý sản phẩm
+  {
+    id: 'products',
+    label: 'Quản lý sản phẩm',
     path: '/products',
     icon: Package,
-  },
-  {
-    label: 'Danh mục',
-    path: '/categories',
-    icon: FolderTree,
-  },
-  {
-    label: 'Thương hiệu',
-    path: '/brands',
-    icon: Store,
-  },
-  {
-    label: 'Thuộc tính sản phẩm',
-    path: '/attributes',
-    icon: SlidersHorizontal,
-  },
-  {
-    label: 'Thư viện hình ảnh',
-    path: '/product-media',
-    icon: Image,
+    children: [
+      // 5.1. Danh mục và phân loại
+      {
+        id: 'product-catalog',
+        label: 'Danh mục & phân loại',
+        path: '/products',
+        icon: FolderTree,
+        children: [
+          {
+            id: 'product-list',
+            label: 'Danh sách sản phẩm',
+            path: '/products',
+            icon: Package,
+          },
+          {
+            id: 'categories',
+            label: 'Danh mục',
+            path: '/categories',
+            icon: FolderTree,
+          },
+          {
+            id: 'brands',
+            label: 'Thương hiệu',
+            path: '/brands',
+            icon: Store,
+          },
+        ],
+      },
+
+      // 5.2. Thuộc tính và biến thể
+      {
+        id: 'product-attributes',
+        label: 'Thuộc tính & biến thể',
+        path: '/attributes',
+        icon: SlidersHorizontal,
+        children: [
+          {
+            id: 'attributes',
+            label: 'Thuộc tính sản phẩm',
+            path: '/attributes',
+            icon: SlidersHorizontal,
+          },
+          {
+            id: 'attribute-values',
+            label: 'Giá trị thuộc tính',
+            path: '/attribute-values',
+            icon: ListFilter,
+          },
+          {
+            id: 'product-variants',
+            label: 'Biến thể sản phẩm',
+            path: '/product-variants',
+            icon: Layers3,
+          },
+          {
+            id: 'variant-attributes',
+            label: 'Liên kết thuộc tính biến thể',
+            path: '/variant-attributes',
+            icon: Boxes,
+          },
+        ],
+      },
+
+      // 5.3. Tài nguyên sản phẩm
+      {
+        id: 'product-assets',
+        label: 'Tài nguyên sản phẩm',
+        path: '/product-media',
+        icon: Image,
+        children: [
+          {
+            id: 'product-media',
+            label: 'Thư viện hình ảnh',
+            path: '/product-media',
+            icon: Image,
+          },
+        ],
+      },
+    ],
   },
 
-  // 5. Kho hàng
+  // 6. Kho hàng
   {
+    id: 'inventory',
     label: 'Kho hàng',
     path: '/inventory',
     icon: Warehouse,
+    children: [
+      {
+        id: 'inventory-overview',
+        label: 'Tồn kho',
+        path: '/inventory',
+        icon: Boxes,
+      },
+    ],
   },
 
-  // 6. Tương tác khách hàng
+  // 7. Hệ thống
   {
-    label: 'Đánh giá sản phẩm',
-    path: '/reviews',
-    icon: MessageSquare,
-  },
-  // 8. Hệ thống
-  {
-    label: 'Cài đặt',
+    id: 'system',
+    label: 'Hệ thống',
     path: '/settings',
     icon: Settings,
+    children: [
+      {
+        id: 'settings',
+        label: 'Cài đặt',
+        path: '/settings',
+        icon: Settings,
+      },
+    ],
   },
 ];
