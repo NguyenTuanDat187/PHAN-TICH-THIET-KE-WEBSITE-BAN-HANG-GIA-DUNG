@@ -23,3 +23,10 @@ export { default as Coupon } from "./Coupon.model";
 export { default as CouponUsage } from "./CouponUsage.model";
 export { default as ProductReview } from "./ProductReview.model";
 export { AIConversation } from "./AIConversation.model";
+// ===== THÊM MỚI: Notification & Chat =====
+export { default as Announcement } from "./Announcement.model";
+export { default as AnnouncementTarget } from "./AnnouncementTarget.model";
+export { default as AnnouncementRead } from "./AnnouncementRead.model";
+export { default as Notification } from "./Notification.model";
+export { default as Conversation } from "./Conversation.model";
+export { default as Message } from "./Message.model";
