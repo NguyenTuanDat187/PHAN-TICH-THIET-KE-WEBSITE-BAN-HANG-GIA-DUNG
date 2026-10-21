@@ -309,7 +309,7 @@ const VariantAttributesPage = () => {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row xl:w-auto">
-              <div className="relative min-w-0 flex-1 sm:min-w-[260px] xl:w-[320px]">
+              <div className="relative min-w-0 flex-1 sm:min-w-65 xl:w-[320px]">
                 <Search
                   size={17}
                   className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
@@ -332,7 +332,7 @@ const VariantAttributesPage = () => {
                   setAttributeFilter(event.target.value);
                   setPage(1);
                 }}
-                className="rounded-lg border border-border-default bg-bg-app px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent-primary sm:min-w-[180px]"
+                className="rounded-lg border border-border-default bg-bg-app px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent-primary sm:min-w-45"
                 aria-label="Lọc theo thuộc tính"
               >
                 <option value="all">Tất cả thuộc tính</option>
