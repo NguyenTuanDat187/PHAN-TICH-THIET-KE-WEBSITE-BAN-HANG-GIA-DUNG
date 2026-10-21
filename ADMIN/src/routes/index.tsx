@@ -41,6 +41,7 @@ import VariantAttributesPage from '../pages/variant-attributes/VariantAttributes
 // Product media
 import ProductMediaPage from '../pages/product-media/ProductMediaPage';
 import OrderDetailPage from '../pages/orders/OrderDetailPage';
+import PaymentsPage from '../pages/payments/PaymentsPage';
 
 import OrdersPage from '../pages/orders/OrdersPage';
 
@@ -187,13 +188,17 @@ export const router = createBrowserRouter([
             element: <OrdersPage />,
           },
           {
-  path: 'orders',
-  element: <OrdersPage />,
-},
-{
-  path: 'orders/:id',
-  element: <OrderDetailPage />,
-},
+            path: 'payments',
+            element: <PaymentsPage />,
+          },
+          {
+            path: 'orders',
+            element: <OrdersPage />,
+          },
+          {
+            path: 'orders/:id',
+            element: <OrderDetailPage />,
+          },
 
           // Admin 404
           {
