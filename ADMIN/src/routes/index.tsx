@@ -40,6 +40,9 @@ import VariantAttributesPage from '../pages/variant-attributes/VariantAttributes
 
 // Product media
 import ProductMediaPage from '../pages/product-media/ProductMediaPage';
+import OrderDetailPage from '../pages/orders/OrderDetailPage';
+
+import OrdersPage from '../pages/orders/OrdersPage';
 
 // ==========================================
 // ADMIN 404 PAGE
@@ -179,6 +182,18 @@ export const router = createBrowserRouter([
             path: 'product-media',
             element: <ProductMediaPage />,
           },
+          {
+            path: 'orders',
+            element: <OrdersPage />,
+          },
+          {
+  path: 'orders',
+  element: <OrdersPage />,
+},
+{
+  path: 'orders/:id',
+  element: <OrderDetailPage />,
+},
 
           // Admin 404
           {

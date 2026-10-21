@@ -272,7 +272,7 @@ export default function AttributesPage() {
       key: 'values',
       header: 'GIÁ TRỊ',
       render: (attribute) => (
-        <div className="flex max-w-[420px] flex-wrap gap-1.5">
+        <div className="flex max-w-105 flex-wrap gap-1.5">
           {attribute.values.length ? (
             <>
               {attribute.values.slice(0, 4).map((item) => (
@@ -394,7 +394,7 @@ export default function AttributesPage() {
               </p>
             </div>
 
-            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-[680px]">
+            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-3 xl:w-170">
               <label className="flex h-10 min-w-0 items-center gap-2 rounded-lg border border-border-default bg-bg-app px-3 focus-within:border-accent-primary sm:col-span-3 xl:col-span-1">
                 <Search size={16} className="shrink-0 text-text-muted" />
                 <input

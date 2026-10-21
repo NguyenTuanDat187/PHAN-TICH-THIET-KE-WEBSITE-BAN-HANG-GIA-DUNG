@@ -13,7 +13,7 @@ interface StatCardProps {
 
 const accentMap: Record<Accent, string> = {
   primary: 'bg-accent-primary/10 text-accent-primary',
-  cyan:    'bg-accent-cyan/10 text-accent-cyan',
+  cyan:    'bg-accent-cyan/10 text-accent-cyan',  
   warning: 'bg-status-warning/10 text-status-warning',
   purple:  'bg-status-purple/10 text-status-purple',
 };
