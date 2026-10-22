@@ -1,0 +1,57 @@
+:root {
+  --store-gold: #b88e2f;
+  --store-gold-hover: #9a7424;
+  --store-gold-active: #7f5f1c;
+  --store-cream: #fff3e3;
+  --store-card: #f4f5f7;
+  --store-text: #3a3a3a;
+  --store-muted: #898989;
+  --store-gray: #9f9f9f;
+  --store-line: rgba(0, 0, 0, 0.17);
+  --store-red: #e97171;
+  --store-green: #2ec1ac;
+}
+
+.shell {
+  --ui-primary: var(--store-gold);
+  --ui-primary-hover: var(--store-gold-hover);
+  --ui-primary-active: var(--store-gold-active);
+  --ui-focus: 0 0 0 3px #b88e2f4d;
+  --ui-radius: 0px;
+  --ui-text: var(--store-text);
+  --ui-text-on-primary: #fff;
+  --ui-border: #9f9f9f;
+  --ui-surface: #fff;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100svh;
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: var(--store-text);
+  color-scheme: light;
+  font-family: Poppins, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.shell h1,
+.shell h2,
+.shell h3 {
+  font-family: Poppins, sans-serif;
+  color: var(--store-text);
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+.wrap {
+  width: min(1240px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.page {
+  flex: 1;
+}

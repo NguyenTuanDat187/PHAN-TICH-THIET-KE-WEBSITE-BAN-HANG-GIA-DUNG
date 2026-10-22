@@ -1,0 +1,21 @@
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #9f9f9f;
+  border-radius: 10px;
+  height: 44px;
+}
+
+.stepper button,
+.stepper input {
+  width: 40px;
+  height: 42px;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  text-align: center;
+}
+
+.stepper button {
+  cursor: pointer;
+}

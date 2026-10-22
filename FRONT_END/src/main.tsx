@@ -1,13 +1,17 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
+import { RouterProvider } from "react-router-dom";
+import { ToastProvider } from "./components/common/index.ts";
 import "./components/common/Icon";
-import { ToastProvider } from "./components/common";
+import { CartProvider } from "./contexts/CartProvider.tsx";
+import "./index.css";
+import { router } from "./routes/router.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
-    <ToastProvider />
+    <CartProvider>
+      <RouterProvider router={router} />
+      <ToastProvider />
+    </CartProvider>
   </StrictMode>,
 );

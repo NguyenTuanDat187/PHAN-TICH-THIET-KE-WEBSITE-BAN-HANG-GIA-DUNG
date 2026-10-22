@@ -1,0 +1,57 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  padding: 64px 0 80px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.summary h2 {
+  font-size: 24px;
+}
+
+.line,
+.totals {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0;
+}
+
+.productName {
+  color: var(--store-gray);
+}
+
+.total {
+  color: var(--store-gold);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.payments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.note {
+  color: var(--store-gray);
+  margin: 0 0 24px;
+}
+
+@media (max-width: 800px) {
+  .layout,
+  .form {
+    grid-template-columns: 1fr;
+  }
+}

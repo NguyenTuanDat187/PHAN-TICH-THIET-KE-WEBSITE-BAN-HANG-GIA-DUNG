@@ -1,0 +1,35 @@
+.banner {
+  position: relative;
+  height: 316px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
+    url("../../assets/images/hero.png") center / cover no-repeat;
+  text-align: center;
+}
+
+.title {
+  margin: 12px 0 8px;
+  font-size: 48px;
+  line-height: 1.1;
+  color: #000;
+}
+
+.crumbs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.crumbs a {
+  color: #000;
+  text-decoration: none;
+}
+
+.current {
+  color: #000;
+  font-weight: 300;
+}
