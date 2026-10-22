@@ -1,0 +1,126 @@
+.card {
+  position: relative;
+  width: 100%;
+  background: var(--store-card);
+  text-align: left;
+}
+
+.media {
+  display: block;
+  aspect-ratio: 285 / 301;
+  overflow: hidden;
+  background: #eee;
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.body {
+  display: block;
+  padding: 16px 16px 24px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--store-text);
+}
+
+.subtitle {
+  margin: 8px 0 0;
+  color: var(--store-muted);
+  font-weight: 500;
+}
+
+.prices {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.prices strong {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.prices s {
+  color: #b0b0b0;
+  font-weight: 400;
+}
+
+.badge {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.sale {
+  background: var(--store-red);
+}
+
+.new {
+  background: var(--store-green);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background: rgba(58, 58, 58, 0.72);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.detailLink {
+  position: absolute;
+  inset: 0;
+}
+
+.overlay > :not(.detailLink) {
+  position: relative;
+  z-index: 1;
+}
+
+.card:hover .overlay,
+.card:focus-within .overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.actions button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -1,0 +1,86 @@
+.layout {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr;
+  gap: 32px;
+  padding: 72px 0;
+}
+
+.tableWrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: #f9f1e7;
+  font-weight: 500;
+  padding: 16px;
+  text-align: left;
+}
+
+.table td {
+  padding: 20px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--store-gray);
+  text-decoration: none;
+}
+
+.product img {
+  width: 108px;
+  height: 108px;
+  object-fit: cover;
+  background: var(--store-card);
+}
+
+.remove {
+  border: 0;
+  background: transparent;
+  color: var(--store-gold);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.totals {
+  background: #f9f1e7;
+  padding: 24px 48px 48px;
+  text-align: center;
+}
+
+.totals h2 {
+  font-size: 32px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin: 24px 0;
+}
+
+.total {
+  color: var(--store-gold);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.empty {
+  padding: 80px 0;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

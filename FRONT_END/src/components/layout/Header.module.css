@@ -1,0 +1,144 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  background: #fff;
+}
+
+.inner {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 0 54px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #000;
+  text-decoration: none;
+}
+
+.mark {
+  width: 50px;
+  height: 32px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mark img {
+  position: absolute;
+  width: 154%;
+  height: 240%;
+  left: -26%;
+  top: -69%;
+  max-width: none;
+}
+
+.name {
+  margin: 0;
+  font-family: Montserrat, sans-serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+}
+
+.nav {
+  display: flex;
+  gap: 48px;
+}
+
+.nav a {
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.nav a[aria-current="page"] {
+  color: var(--store-gold);
+}
+
+.tools {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 38px;
+}
+
+.iconButton {
+  position: relative;
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.iconButton img {
+  width: 28px;
+  height: 28px;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: var(--store-gold);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search input {
+  width: 180px;
+  height: 36px;
+  border: 1px solid var(--store-line);
+  padding: 0 10px;
+  font: inherit;
+}
+
+@media (max-width: 900px) {
+  .header {
+    height: auto;
+    padding: 16px 0;
+  }
+
+  .inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 0 20px;
+  }
+
+  .nav {
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tools {
+    gap: 20px;
+  }
+}

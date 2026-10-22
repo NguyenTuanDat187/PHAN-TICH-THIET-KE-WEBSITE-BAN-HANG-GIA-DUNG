@@ -38,6 +38,7 @@ import adminOrderItemRoutes from "./src/routes/admin/admin.order-item.routes";
 import paymentRoutes from "./src/routes/payment.routes";
 import adminPaymentRoutes from "./src/routes/admin/admin.payment.routes";
 import aiProductSearchRoutes from "./src/routes/aiProductSearch.routes";
+import aiChatRoutes from "./src/routes/aiChat.routes";
 
 
 /**
@@ -187,6 +188,8 @@ app.use("/api/user-addresses", userAddressRoutes);
 app.use("/api/admin/statistics", adminStatisticsRoutes);
 // API quản lý khách hàng
 app.use("/api/admin/customers", adminCustomerRoutes);
+// AI Chat tư vấn khách hàng
+app.use("/api/ai", aiChatRoutes);
 
 app.use("/api/checkout", checkoutRoutes);
 
