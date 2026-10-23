@@ -41,8 +41,7 @@ export default function DataTable<T>({
       className={`w-full min-w-0 overflow-hidden bg-bg-surface ${className}`}
     >
       <div
-        className="w-full min-w-0 overflow-x-auto overscroll-x-contain"
-        role="region"
+        className="w-full min-w-0 overflow-hidden" role="region"
         aria-label="Bảng dữ liệu"
         tabIndex={0}
       >

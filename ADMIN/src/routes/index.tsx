@@ -44,6 +44,10 @@ import OrderDetailPage from '../pages/orders/OrderDetailPage';
 import PaymentsPage from '../pages/payments/PaymentsPage';
 
 import OrdersPage from '../pages/orders/OrdersPage';
+import CouponsPage from '../pages/coupons/CouponsPage';
+import ReviewsPage from '../pages/reviews/ReviewsPage';
+import ReviewDetailPage from '../pages/reviews/ReviewDetailPage';
+
 
 // ==========================================
 // ADMIN 404 PAGE
@@ -199,7 +203,18 @@ export const router = createBrowserRouter([
             path: 'orders/:id',
             element: <OrderDetailPage />,
           },
-
+          {
+            path: 'coupons',
+            element: <CouponsPage />,
+          },
+           {
+            path: 'reviews',
+            element: <ReviewsPage />,
+          },
+          {
+  path: '/admin/reviews/:id',
+  element: <ReviewDetailPage />,
+},
           // Admin 404
           {
             path: '*',
