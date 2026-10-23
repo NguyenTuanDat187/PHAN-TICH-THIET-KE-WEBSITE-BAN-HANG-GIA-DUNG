@@ -47,7 +47,10 @@ import OrdersPage from '../pages/orders/OrdersPage';
 import CouponsPage from '../pages/coupons/CouponsPage';
 import ReviewsPage from '../pages/reviews/ReviewsPage';
 import ReviewDetailPage from '../pages/reviews/ReviewDetailPage';
-
+import AnnouncementsPage from '../pages/announcements/components/AnnouncementFormModal';
+import ConversationsPage from '../pages/conversations/ConversationsPage';
+import NotificationsPage from '../pages/notifications/NotificationsPage';
+import type { AnnouncementFormValues } from '../types/announcement.types';
 
 // ==========================================
 // ADMIN 404 PAGE
@@ -211,6 +214,22 @@ export const router = createBrowserRouter([
             path: 'reviews',
             element: <ReviewsPage />,
           },
+          {
+  path: 'announcements',
+  element: <AnnouncementsPage open={false} onClose={function (): void {
+    throw new Error('Function not implemented.');
+  } } onSubmit={function (values: AnnouncementFormValues): void {
+    throw new Error('Function not implemented.');
+  } } />,
+},
+{
+  path: 'conversations',
+  element: <ConversationsPage />,
+},
+{
+  path: 'notifications',
+  element: <NotificationsPage />,
+},
           {
   path: '/admin/reviews/:id',
   element: <ReviewDetailPage />,

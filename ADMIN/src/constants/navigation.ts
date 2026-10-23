@@ -16,6 +16,9 @@ import {
   Layers3,
   Boxes,
   Warehouse,
+  BellRing,
+  MessageCircle,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -92,6 +95,18 @@ export const navigation: NavigationItem[] = [
         label: 'Đánh giá sản phẩm',
         path: '/reviews',
         icon: MessageSquare,
+      },
+      {
+        id: 'conversations',
+        label: 'Hội thoại khách hàng',
+        path: '/conversations',
+        icon: MessageCircle,
+      },
+      {
+        id: 'announcements',
+        label: 'Thông báo gửi khách',
+        path: '/announcements',
+        icon: BellRing,
       },
     ],
   },
@@ -211,6 +226,12 @@ export const navigation: NavigationItem[] = [
         label: 'Cài đặt',
         path: '/settings',
         icon: Settings,
+      },
+      {
+        id: 'admin-notifications',
+        label: 'Thông báo quản trị',
+        path: '/notifications',
+        icon: Bell,
       },
     ],
   },
