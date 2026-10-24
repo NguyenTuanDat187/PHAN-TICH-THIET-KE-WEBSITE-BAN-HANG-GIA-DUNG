@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { AppError } from "../utils/appError";
 import { Types } from "mongoose";
 import Order, { IOrder, PaymentMethod } from "../models/Order.model";
 import Payment, { IPayment } from "../models/Payment.model";
@@ -14,11 +15,8 @@ import {
 
 const SESSION_DURATION_MS = 15 * 60 * 1000;
 
-const createHttpError = (statusCode: number, message: string): Error => {
-  const error = new Error(message) as Error & { statusCode: number };
-  error.statusCode = statusCode;
-  return error;
-};
+const createHttpError = (statusCode: number, message: string): Error =>
+  new AppError(statusCode, message);
 
 const formatVnpDate = (date: Date): string => {
   const pad = (value: number): string => String(value).padStart(2, "0");
@@ -172,7 +170,7 @@ export const createPayment = async (
 
   const activePayment = await Payment.findOne({
     orderId: order._id,
-    status: { $in: ["pending", "processing"] },
+    status: { $in: ["pending"] },
   }).sort({ createdAt: -1 });
 
   if (
@@ -272,7 +270,7 @@ export const applyGatewayResult = async (
     existingByTransaction ??
     (await Payment.findOne({
       orderId: order._id,
-      status: { $in: ["pending", "processing"] },
+      status: { $in: ["pending"] },
     }).sort({ createdAt: -1 }));
 
   if (!payment) {

@@ -335,6 +335,66 @@ const main = async (): Promise<void> => {
     `confirmed=${confirmed.status} | processing=${processing.status} | shipping=${shipping.status} | completed=${completed.status}`
   );
 
+  const seededD = await seedOrder(userIdB, variant._id);
+  const dConfirmed = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "confirmed" },
+    adminToken
+  );
+  const dProcessing = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "processing" },
+    adminToken
+  );
+  const dShipping = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "shipping" },
+    adminToken
+  );
+  const dDelivered = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "delivered" },
+    adminToken
+  );
+  expect(
+    "shipping -> delivered (da giao, cho khach xac nhan)",
+    dConfirmed.status === 200 &&
+      dProcessing.status === 200 &&
+      dShipping.status === 200 &&
+      dDelivered.status === 200 &&
+      dDelivered.json.data.status === "delivered" &&
+      Boolean(dDelivered.json.data.deliveredAt),
+    `confirmed=${dConfirmed.status} | processing=${dProcessing.status} | shipping=${dShipping.status} | delivered=${dDelivered.status} | deliveredAt=${Boolean(dDelivered.json.data?.deliveredAt)}`
+  );
+
+  const dCancelFromDelivered = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "cancelled" },
+    adminToken
+  );
+  expect(
+    "Chan huy don da delivered (tu choi khach phai dung returned)",
+    dCancelFromDelivered.status === 400,
+    `HTTP ${dCancelFromDelivered.status} | ${dCancelFromDelivered.json.message}`
+  );
+
+  const dCompleted = await call(
+    "PUT",
+    `/api/admin/orders/${seededD.order._id}/status`,
+    { status: "completed" },
+    adminToken
+  );
+  expect(
+    "delivered -> completed (khach xac nhan) va COD tu ghi payment",
+    dCompleted.status === 200 && dCompleted.json.data.paymentStatus === "paid",
+    `HTTP ${dCompleted.status} | paymentStatus=${dCompleted.json.data?.paymentStatus}`
+  );
+
   const returned = await call(
     "PUT",
     `/api/admin/orders/${seededACompleted.order._id}/status`,
@@ -361,11 +421,13 @@ const main = async (): Promise<void> => {
 
   await cleanup();
   console.log(`\nTỔNG KẾT: PASS=${passed} | FAIL=${failed}`);
+  await mongoose.disconnect();
   process.exit(failed > 0 ? 1 : 0);
 };
 
 main().catch(async (error) => {
   console.error("Lỗi chạy test order:", error);
   await cleanup();
+  await mongoose.disconnect();
   process.exit(1);
 });

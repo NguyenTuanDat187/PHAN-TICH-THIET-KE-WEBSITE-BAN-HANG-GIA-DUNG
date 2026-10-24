@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { AppError } from "../utils/appError";
 import Coupon from "../models/Coupon.model";
 import CouponUsage from "../models/CouponUsage.model";
 import Order, { IOrder, OrderStatus } from "../models/Order.model";
@@ -10,7 +11,8 @@ export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   pending: ["confirmed", "cancelled"],
   confirmed: ["processing", "cancelled"],
   processing: ["shipping", "cancelled"],
-  shipping: ["completed", "cancelled"],
+  shipping: ["delivered", "completed", "cancelled"],
+  delivered: ["completed", "returned"],
   completed: ["returned"],
   cancelled: [],
   returned: [],
@@ -23,11 +25,8 @@ export interface OrderPaginationMeta {
   totalPages: number;
 }
 
-const createHttpError = (statusCode: number, message: string): Error => {
-  const error = new Error(message) as Error & { statusCode: number };
-  error.statusCode = statusCode;
-  return error;
-};
+const createHttpError = (statusCode: number, message: string): Error =>
+  new AppError(statusCode, message);
 
 const buildPaginationMeta = (
   page: number,
@@ -228,6 +227,9 @@ export const updateOrderStatusAdmin = async (
   }
   if (nextStatus === "shipping") {
     order.shippedAt = new Date();
+  }
+  if (nextStatus === "delivered") {
+    order.deliveredAt = new Date();
   }
   if (nextStatus === "completed") {
     order.completedAt = new Date();
